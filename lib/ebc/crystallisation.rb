@@ -6,7 +6,7 @@ require "fileutils"
 module EBC
   # Crystallisation: the only output that survives a burst.
   #
-  # Grok reads the thread and writes five meme image prompts; Grok's image
+  # Grok reads the thread and writes three meme image prompts; Grok's image
   # model renders them. The images land in Config::MEME_DIR. The thread
   # itself dies with its TTL like everything else.
   class Crystallisation

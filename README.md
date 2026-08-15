@@ -4,7 +4,7 @@
 
 A disposable conversation space that lives for ~10 minutes and then deletes
 itself. You talk, four haiku agents answer in seventeen syllables each, and
-when the burst ends the thread is distilled into five memes — plus, if
+when the burst ends the thread is distilled into three memes — plus, if
 anything in it actually mattered, one short saved note. Everything else dies
 with the TTL.
 
@@ -50,7 +50,7 @@ They read the whole thread, including each other, and reply in strict haiku.
 ┌─────────────────────────────────────┐
 │        Crystallisation              │
 │  Grok reads the thread and writes   │
-│  5 meme prompts · Grok's image      │
+│  3 meme prompts · Grok's image      │
 │  model renders them into memes/     │
 └─────────────────┬───────────────────┘
                   │
@@ -86,7 +86,7 @@ Then run a burst:
 ```bash
 ruby bin/burst start            # → prints a uuid
 ruby bin/burst say <uuid> "should I commit to this idea or keep scaffolding"
-ruby bin/burst crystallise <uuid>   # → 5 memes in memes/, then Opus curates
+ruby bin/burst crystallise <uuid>   # → 3 memes in memes/, then Opus curates
 ```
 
 ## CLI
@@ -97,7 +97,7 @@ ruby bin/burst crystallise <uuid>   # → 5 memes in memes/, then Opus curates
 | `burst say <uuid> <text>`  | Post a message; all four agents reply in haiku |
 | `burst thread <uuid>`      | Print the thread so far                        |
 | `burst status <uuid>`      | Remaining TTL and message count                |
-| `burst crystallise <uuid>` | 5 memes via Grok, then Opus curates the thread |
+| `burst crystallise <uuid>` | 3 memes via Grok, then Opus curates the thread |
 | `burst curate <uuid>`      | Opus only: clean up the thread, save what matters |
 | `burst kill <uuid>`        | Destroy the namespace immediately              |
 | `healthcheck`              | Run the automated health checks                |
@@ -128,7 +128,7 @@ lib/ebc/config.rb          env-driven configuration
 lib/ebc/grok_client.rb     Grok: generation (chat + images)
 lib/ebc/haiku_agent.rb     the four-agent lineup
 lib/ebc/burst.rb           Redis-backed burst lifecycle
-lib/ebc/crystallisation.rb thread → 5 meme prompts → 5 images
+lib/ebc/crystallisation.rb thread → 3 meme prompts → 3 images
 lib/ebc/curator.rb         Claude Opus: the last reasoning model
 ```
 
@@ -138,7 +138,7 @@ lib/ebc/curator.rb         Claude Opus: the last reasoning model
 - **Short by default** — 10 minutes is already generous
 - **Disposable by design** — the system *wants* to die
 - **Haiku only** — agents get seventeen syllables, which is plenty
-- **Crystallise or die** — the final output is five memes, not a whitepaper
+- **Crystallise or die** — the final output is three memes, not a whitepaper
 - **Reason last** — Opus gets the final word on what survives, and its
   default answer is "nothing"
 

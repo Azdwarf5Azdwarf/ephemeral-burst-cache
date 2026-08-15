@@ -12,7 +12,7 @@ module EBC
     GROK_CHAT_MODEL  = ENV.fetch("GROK_CHAT_MODEL", "grok-4-fast-non-reasoning")
     GROK_IMAGE_MODEL = ENV.fetch("GROK_IMAGE_MODEL", "grok-2-image")
 
-    MEME_COUNT = 5
+    MEME_COUNT = 3
     MEME_DIR   = ENV.fetch("EBC_MEME_DIR", "memes")
 
     # Claude Opus is the single reasoning model: the last step of the

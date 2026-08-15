@@ -5,7 +5,7 @@ is short-lived and local. Long-running persistent deployments defeat the
 purpose.
 
 **Primary metric: cost efficiency.** One Redis container, one API vendor,
-five images per burst.
+three images per burst.
 
 ---
 
