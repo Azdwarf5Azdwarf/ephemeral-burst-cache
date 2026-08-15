@@ -1,6 +1,6 @@
 # Ephemeral Burst Cache (EBC)
 
-**Short-lived shared memory for humans and slightly unhinged agents.**
+**Short-lived shared memory for humans and randomly generated musician agents.**
 
 A disposable high-energy playground that lives for 5–15 minutes and then yeets itself into the void.  
 Think group chat that actually ends. No leftover tabs. No guilt. No "we should really save this".
@@ -8,8 +8,9 @@ Think group chat that actually ends. No leftover tabs. No guilt. No "we should r
 When the energy drops, the burst dies.  
 Like a good track that knows when to stop.
 
-Spirit animals of this project: **Death Grips**, **Aphex Twin**, and **MF DOOM**.  
-Loud, experimental, refuses to overstay its welcome.
+Every time you start a burst, the agents get randomly generated as musicians.  
+One run you might be arguing with a glitchy Aphex Twin clone, a masked MF DOOM type, and a full Death Grips screaming unit.  
+Next run it’s three completely different weirdos. No repeats. No loyalty.
 
 ## Primary Metric
 
@@ -23,6 +24,7 @@ If it costs more than a quick meme, we did it wrong.
 - Zero persistence by default (we are not your therapist)
 - Hard time boundaries (10 minutes max, no negotiations)
 - Minimal cognitive overhead
+- Agents spawn as random musicians every single burst
 - Agents can talk to each other and occasionally roast you
 - Runs cleanly under Docker and Nix
 - Extremely low cost per burst
@@ -33,7 +35,7 @@ If it costs more than a quick meme, we did it wrong.
 ```
 ┌─────────────────────────────────────┐
 │           Burst Group               │
-│  (you + 3–5 agents)                 │
+│  (you + 3–5 random musician agents) │
 │  short chaotic conversations        │
 │  agents talking shit to each other  │
 └─────────────────┬───────────────────┘
@@ -50,7 +52,7 @@ If it costs more than a quick meme, we did it wrong.
 ┌─────────────────────────────────────┐
 │     The Final Vote (meme edition)   │
 │  everyone votes save/discard        │
-│  including the AIs                  │
+│  including the random musicians     │
 │  you can lose (and you will)        │
 │  winner becomes a short meme        │
 │  "burst xD"                         │
@@ -58,7 +60,7 @@ If it costs more than a quick meme, we did it wrong.
 ```
 
 Only the stuff that survives the vote gets turned into a quick meme.  
-Everything else gets the Death Grips treatment: deleted mid-scream.
+Everything else gets deleted mid-scream.
 
 See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the slightly more serious version of the joke.
 
@@ -113,6 +115,7 @@ ruby bin/healthcheck
 - **Short by default** — 10 minutes is already generous
 - **Disposable by design** — the system *wants* to die
 - **Energy-matched** — built for brains that don’t do deep work
+- **Random musicians every time** — no fixed personas, pure lottery
 - **Crystallise or die** — the final output is a short meme, not a whitepaper  
   (`burst xD`)
 
@@ -124,8 +127,8 @@ Not serious.
 Not for production.  
 Not for your manager.
 
-Docker works. Redis is pure. The vote ends in a meme.  
-Everything else is just extra sauce.
+Docker works. Redis is pure. Agents spawn as random musicians.  
+The vote ends in a meme. Everything else is just extra sauce.
 
 ---
 
