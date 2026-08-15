@@ -3,8 +3,9 @@
 **You don't record a group chat. You take a photo after it has ended.**
 
 A burst is ten minutes of talking nonsense in rhyme with three poets and
-whoever you invited. Nothing you say is kept. When it's over, a judge says
-one last thing out loud, and then you get a picture.
+whoever you invited. Nothing you say is kept. When it's over, an adult opens
+the door and asks what the hell you're all doing, everyone laughs it off, and
+then you get a picture.
 
 If you took a real photo of you and your friends, the poets get drawn into
 it — they were there too. Your friends hold still, because they were actually
@@ -24,7 +25,7 @@ photos/2026-08-11-restless.gif
 | | |
 |---|---|
 | **Claude Haiku 4.5 ×3** | The poets. Haiku models that write sonnets, because the only rule is that we rhyme. |
-| **Claude Opus 4.8** | The judge. Arrives at the end, is the only one who doesn't have to rhyme, and says whatever it wants. |
+| **Claude Opus 4.8** | The adult who opens the door. Doesn't rhyme, isn't impressed, and doesn't get the last word. |
 | **Grok** | The camera. Doesn't talk. Only takes the picture. |
 
 ## The poets
@@ -51,7 +52,8 @@ conversation rhymes as a group, not one voice at a time.
         Redis · no AOF · no RDB · hard TTL
                           │
                           ▼
-        the judge says its piece, and is never written down
+        an adult opens the door: "Vad fan håller ni på med?"
+        the room laughs it off and carries on
                           │
                           ▼
         the poets are drawn into your photo → one animated picture
@@ -89,7 +91,7 @@ ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted.gif
 | `burst say <uuid> <text>` | Take your turn; the poets answer |
 | `burst thread <uuid>` | The conversation so far |
 | `burst status <uuid>` | Who's here and how long is left |
-| `burst photo <uuid> [pic]` | The judge speaks, then the picture is taken |
+| `burst photo <uuid> [pic]` | An adult walks in, gets laughed off, and the picture is taken |
 | `burst kill <uuid>` | Destroy it now |
 | `healthcheck` | Redis, keys, and the GIF tool |
 
@@ -105,7 +107,7 @@ Two API keys: `ANTHROPIC_API_KEY` and `XAI_API_KEY`.
 - **Nothing is recorded** — no transcript, no summary, no saved note
 - **Short by default** — ten minutes is already generous
 - **We only rhyme** — and the rhyme is the group's, not each voice's
-- **The judge says its piece once** — never written, never re-read
+- **The adult says its piece once** — never written, and never obeyed
 - **The picture is the memory** — and you can tell from it whether it was fun
 
 ## Status

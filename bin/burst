@@ -100,6 +100,19 @@ when "photo"
   puts verdict.words
   puts
 
+  # And the room laughs it off. Not posted to the thread on purpose: the judge
+  # has already read everything, this is the last thing that happens, and it
+  # goes the way the rest of it goes — seen once, then gone.
+  rhyme = EBC::SonnetAgent.rhyme_word(verdict.words)
+  EBC::SonnetAgent.lineup.each do |poet|
+    line = poet.laugh_off(burst.thread, said: verdict.words, rhyme_with: rhyme)
+    next if line.nil?
+
+    rhyme = EBC::SonnetAgent.rhyme_word(line)
+    puts "  #{poet.name}: #{line.lines.map(&:strip).reject(&:empty?).join(" ")}"
+  end
+  puts
+
   yours = ARGV[2]
   path = EBC::GroupPhoto.new(burst).run(verdict, photo: yours)
   puts yours ? "The poets joined you in: #{path}" : "The picture: #{path}"
