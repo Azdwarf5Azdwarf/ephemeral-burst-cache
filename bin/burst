@@ -1,0 +1,87 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "securerandom"
+require "redis"
+require "json"
+
+REDIS_URL = ENV.fetch("REDIS_URL", "redis://127.0.0.1:6379/0")
+DEFAULT_TTL = 600 # 10 minutes
+
+def redis
+  @redis ||= Redis.new(url: REDIS_URL)
+end
+
+def namespace(uuid)
+  "burst:#{uuid}"
+end
+
+def start(ttl = DEFAULT_TTL)
+  uuid = SecureRandom.uuid
+  key = "#{namespace(uuid)}:meta"
+
+  meta = {
+    uuid: uuid,
+    started_at: Time.now.utc.iso8601,
+    ttl: ttl,
+    status: "live"
+  }
+
+  redis.set(key, meta.to_json, ex: ttl)
+  redis.set("#{namespace(uuid)}:status", "live", ex: ttl)
+
+  puts "Burst started"
+  puts "  uuid:  #{uuid}"
+  puts "  ttl:   #{ttl}s"
+  puts "  ns:    #{namespace(uuid)}:*"
+  uuid
+end
+
+def status(uuid)
+  key = "#{namespace(uuid)}:meta"
+  data = redis.get(key)
+
+  if data.nil?
+    puts "Burst #{uuid} is dead or never existed"
+    return
+  end
+
+  meta = JSON.parse(data)
+  ttl = redis.ttl(key)
+  puts "Burst #{uuid}"
+  puts "  status: #{meta["status"]}"
+  puts "  started: #{meta["started_at"]}"
+  puts "  remaining: #{ttl}s"
+end
+
+def kill(uuid)
+  keys = redis.keys("#{namespace(uuid)}:*")
+  if keys.empty?
+    puts "Nothing to kill"
+    return
+  end
+
+  redis.del(*keys)
+  puts "Burst #{uuid} destroyed (#{keys.size} keys)"
+end
+
+cmd = ARGV[0]
+
+case cmd
+when "start"
+  ttl = (ARGV[1] || DEFAULT_TTL).to_i
+  start(ttl)
+when "status"
+  uuid = ARGV[1] or abort("usage: burst status <uuid>")
+  status(uuid)
+when "kill"
+  uuid = ARGV[1] or abort("usage: burst kill <uuid>")
+  kill(uuid)
+else
+  puts <<~USAGE
+    Usage:
+      burst start [ttl]
+      burst status <uuid>
+      burst kill <uuid>
+  USAGE
+end
