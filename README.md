@@ -15,8 +15,8 @@ The picture is the only thing that survives. Its filename says how the night
 went, so a folder of these is browsable by feeling:
 
 ```
-photos/2026-08-15-delighted-4laughs.gif
-photos/2026-08-11-restless-0laughs.gif
+photos/2026-08-15-delighted.gif
+photos/2026-08-11-restless.gif
 ```
 
 ## Who does what
@@ -25,7 +25,6 @@ photos/2026-08-11-restless-0laughs.gif
 |---|---|
 | **Claude Haiku 4.5 ×3** | The poets. Haiku models that write sonnets, because the only rule is that we rhyme. |
 | **Claude Opus 4.8** | The judge. Arrives at the end, is the only one who doesn't have to rhyme, and says whatever it wants. |
-| **ElevenLabs** | Hears the room — Scribe tags laughter inline — and gives the judge a voice. |
 | **Grok** | The camera. Doesn't talk. Only takes the picture. |
 
 ## The poets
@@ -45,8 +44,6 @@ conversation rhymes as a group, not one voice at a time.
 ```
         you  +  a friend you invited  +  3 poets
                           │
-              speech ─────┤───── ElevenLabs Scribe
-                          │       (laughs) tagged inline
                           ▼
               rhyming quatrains, handed between voices
                           │
@@ -54,7 +51,7 @@ conversation rhymes as a group, not one voice at a time.
         Redis · no AOF · no RDB · hard TTL
                           │
                           ▼
-        the judge speaks aloud, and is never written down
+        the judge says its piece, and is never written down
                           │
                           ▼
         the poets are drawn into your photo → one animated picture
@@ -79,8 +76,7 @@ Then take a walk:
 ruby bin/burst start                        # → a uuid
 ruby bin/burst join <uuid> Sam              # your friend joins
 ruby bin/burst say <uuid> "the sky looks personally offended"
-ruby bin/burst listen <uuid> walk.m4a       # or just talk, laughter and all
-ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted-4laughs.gif
+ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted.gif
 ```
 
 ## Commands
@@ -91,27 +87,25 @@ ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted-4laughs.g
 | `burst invite <uuid>` | Print the code a friend needs |
 | `burst join <uuid> <name>` | Join someone else's burst |
 | `burst say <uuid> <text>` | Take your turn; the poets answer |
-| `burst listen <uuid> <file>` | Transcribe audio as your turn, laughter counted |
 | `burst thread <uuid>` | The conversation so far |
-| `burst status <uuid>` | Who's here, time left, how funny it was |
+| `burst status <uuid>` | Who's here and how long is left |
 | `burst photo <uuid> [pic]` | The judge speaks, then the picture is taken |
 | `burst kill <uuid>` | Destroy it now |
 | `healthcheck` | Redis, keys, and the GIF tool |
 
 ## Requirements
 
-Redis, Ruby 3.3, **ImageMagick** (the picture), and optionally an audio
-player (`ffplay`, `afplay`, `mpv`, …) so the judge can be heard rather than
-read. `nix develop` provides all of it.
+Redis, Ruby 3.3, and **ImageMagick** (the picture). `nix develop` provides
+all of it.
 
-Three API keys: `ANTHROPIC_API_KEY`, `XAI_API_KEY`, `ELEVENLABS_API_KEY`.
+Two API keys: `ANTHROPIC_API_KEY` and `XAI_API_KEY`.
 
 ## Core principles
 
 - **Nothing is recorded** — no transcript, no summary, no saved note
 - **Short by default** — ten minutes is already generous
 - **We only rhyme** — and the rhyme is the group's, not each voice's
-- **The judge is heard once** — never written, never re-read
+- **The judge says its piece once** — never written, never re-read
 - **The picture is the memory** — and you can tell from it whether it was fun
 
 ## Status

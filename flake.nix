@@ -16,7 +16,6 @@
           ruby_3_3
           docker-compose
           imagemagick   # draws the poets into your photo, assembles the GIF
-          ffmpeg        # ffplay, so the judge can be heard instead of read
         ];
 
         shellHook = ''

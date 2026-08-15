@@ -10,9 +10,8 @@ def usage
       burst invite <uuid>         Print the code a friend needs to join
       burst join <uuid> <name>    Join someone else's burst
       burst say <uuid> <text>     Take your turn; the three poets answer
-      burst listen <uuid> <file>  Transcribe audio as your turn (hears laughter)
       burst thread <uuid>         Print the conversation so far
-      burst status <uuid>         Who's here, how long is left, how funny was it
+      burst status <uuid>         Who's here and how long is left
       burst photo <uuid> [pic]    The judge speaks, then the poets are drawn
                                   into the picture you took of you and your
                                   friends. Omit it and the whole thing is drawn.
@@ -74,19 +73,6 @@ when "say"
   puts
   poets_reply(burst)
 
-when "listen"
-  burst = live_burst(ARGV[1])
-  audio = ARGV[2] or usage
-  voice = EBC::Voice.new
-  heard = voice.transcribe(audio)
-  laughs = EBC::Voice.laughter_count(heard)
-  burst.add_laughter(laughs)
-  burst.post(burst.participants.first || "you", heard)
-  puts "Heard: #{heard}"
-  puts "Laughter: #{laughs}" if laughs.positive?
-  puts
-  poets_reply(burst)
-
 when "thread"
   burst = live_burst(ARGV[1])
   burst.thread.each do |entry|
@@ -103,26 +89,16 @@ when "status"
   puts "  remaining: #{burst.ttl_remaining}s"
   puts "  here:      #{burst.participants.join(", ")}"
   puts "  stanzas:   #{burst.thread.size}"
-  puts "  laughter:  #{burst.laughter}"
 
 when "photo"
   burst = live_burst(ARGV[1])
   verdict = EBC::Judge.new.run(burst)
   abort "Nothing happened here — no photo taken." if verdict.nil?
 
-  spoken = begin
-    EBC::Voice.new.then { |v| v.play(v.speak(verdict.words)) }
-  rescue EBC::Voice::Error => e
-    warn "(the judge could not be heard: #{e.message})"
-    false
-  end
-
-  # Heard once, or read once. Either way it is never written down.
-  unless spoken
-    puts
-    puts verdict.words
-    puts
-  end
+  # Said once, and never written down.
+  puts
+  puts verdict.words
+  puts
 
   yours = ARGV[2]
   path = EBC::GroupPhoto.new(burst).run(verdict, photo: yours)

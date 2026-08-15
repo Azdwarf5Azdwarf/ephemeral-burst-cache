@@ -49,7 +49,7 @@ module EBC
 
       tool = gif_tool
       FileUtils.mkdir_p(out_dir)
-      out = photo_path(out_dir, verdict.mood, @burst.laughter)
+      out = photo_path(out_dir, verdict.mood)
 
       Dir.mktmpdir("ebc-frames") do |tmp|
         paths = (0...frames).map do |index|
@@ -86,7 +86,7 @@ module EBC
         Cicada, who is wiry and restless and looks like they are talking too fast;
         Ember, who is warm and rumpled and quietly amused.
         Clean illustrated style with bold outlines, like a sticker or a decal.
-        They look #{verdict.mood}#{laughter_clause}.
+        They look #{verdict.mood}.
         Right now: #{pose}.
         They stand on a completely flat solid #{CHROMA} background —
         no floor, no shadow, no scenery, no gradient, nothing behind them.
@@ -102,20 +102,11 @@ module EBC
       <<~PROMPT.gsub(/\s+/, " ").strip
         A warm illustrated group photo of #{who}, together with three characters
         named Frost, Cicada and Ember. #{verdict.scene}
-        The mood is #{verdict.mood}#{laughter_clause}.
+        The mood is #{verdict.mood}.
         Right now: #{pose}.
         Painterly and charming, everyone in one shot, facing the camera.
         No text, no words, no captions anywhere in the image.
       PROMPT
-    end
-
-    def laughter_clause
-      count = @burst.laughter
-      return "" if count.zero?
-      return ", and one of them just laughed" if count == 1
-      return ", and they have been laughing a lot" if count >= 4
-
-      ", and they have been laughing"
     end
 
     # Key the chroma out and paste the poets over the real photo.
@@ -141,10 +132,10 @@ module EBC
       raise Error, "could not read the size of #{path}"
     end
 
-    # photos/2026-08-15-delighted-4laughs.gif — never silently overwriting a
-    # picture that already exists.
-    def photo_path(dir, mood, laughs)
-      base = "#{Date.today.iso8601}-#{mood}-#{laughs}laughs"
+    # photos/2026-08-15-delighted.gif — never silently overwriting a picture
+    # that already exists.
+    def photo_path(dir, mood)
+      base = "#{Date.today.iso8601}-#{mood}"
       path = File.join(dir, "#{base}.gif")
       return path unless File.exist?(path)
 
