@@ -1,37 +1,41 @@
 # Ephemeral Burst Cache (EBC)
 
-**Short-lived shared memory for humans and agents.**
+**Short-lived shared memory for humans and slightly unhinged agents.**
 
-A disposable, high-energy working memory that lives for 5–15 minutes and then completely disappears. Designed for parallel short-burst conversations between a human and multiple agents.
+A disposable high-energy playground that lives for 5–15 minutes and then yeets itself into the void.  
+Think group chat that actually ends. No leftover tabs. No guilt. No "we should really save this".
 
-When the energy drops, the burst dies. No residual state. No long-lived connections.
+When the energy drops, the burst dies.  
+Like a good track that knows when to stop.
+
+Spirit animals of this project: **Death Grips**, **Aphex Twin**, and **MF DOOM**.  
+Loud, experimental, refuses to overstay its welcome.
 
 ## Primary Metric
 
-**Cost efficiency is the only primary metric.**
+**Cost efficiency is the only primary metric.**  
+Everything else is just vibes.
 
-Everything else (latency, features, convenience) is secondary.  
-The system is considered successful when it delivers useful short-lived coordination at the lowest possible resource cost and then disappears cleanly.
+If it costs more than a quick meme, we did it wrong.
 
 ## Design Goals
 
-- Zero persistence by default
-- Hard time boundaries
+- Zero persistence by default (we are not your therapist)
+- Hard time boundaries (10 minutes max, no negotiations)
 - Minimal cognitive overhead
-- Native multi-agent support
+- Agents can talk to each other and occasionally roast you
 - Runs cleanly under Docker and Nix
 - Extremely low cost per burst
-- Explicit multi-party promotion instead of automatic saving
+- Ends with a vote that produces a short meme instead of a thesis
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────┐
 │           Burst Group               │
-│  (human + 3–5 agents)               │
-│                                     │
-│  short parallel conversations       │
-│  agents talk to each other          │
+│  (you + 3–5 agents)                 │
+│  short chaotic conversations        │
+│  agents talking shit to each other  │
 └─────────────────┬───────────────────┘
                   │
                   ▼
@@ -44,17 +48,19 @@ The system is considered successful when it delivers useful short-lived coordina
                   │
                   ▼
 ┌─────────────────────────────────────┐
-│     Crystallisation / Save Vote     │
-│  external · authenticated majority  │
-│  human + agents vote                │
-│  grounded in external memory        │
-│  human can lose                     │
+│     The Final Vote (meme edition)   │
+│  everyone votes save/discard        │
+│  including the AIs                  │
+│  you can lose (and you will)        │
+│  winner becomes a short meme        │
+│  "burst xD"                         │
 └─────────────────────────────────────┘
 ```
 
-Only items that survive the Save Vote are promoted. Everything else dies with the burst.
+Only the stuff that survives the vote gets turned into a quick meme.  
+Everything else gets the Death Grips treatment: deleted mid-scream.
 
-See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the full protocol.
+See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the slightly more serious version of the joke.
 
 ## Quick Start (Docker)
 
@@ -62,9 +68,7 @@ See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the full protocol.
 docker compose up -d
 ```
 
-This starts a pure Redis instance with persistence completely disabled and an automated healthcheck.
-
-Connect:
+Pure Redis. No feelings. No persistence. Just vibes and a healthcheck.
 
 ```bash
 redis-cli -p 6379
@@ -73,27 +77,13 @@ SET burst:demo:status "live" EX 600
 
 ## Health Checks
 
-Automated checks are included:
+Because even chaotic systems need a little self-respect:
 
-**Docker healthcheck** (runs automatically):
-```yaml
-healthcheck:
-  test: ["CMD", "redis-cli", "ping"]
-```
-
-**Ruby healthcheck** (manual or CI):
 ```bash
 ruby bin/healthcheck
 ```
 
-It verifies:
-- Redis connectivity
-- Persistence is disabled (`save` empty)
-- AOF is off
-- Namespace isolation works
-- TTL enforcement works
-
-Exit code `0` = healthy, `1` = failed.
+It checks that Redis is alive, persistence is still off, and the universe hasn’t collapsed yet.
 
 ## Nix
 
@@ -101,7 +91,7 @@ Exit code `0` = healthy, `1` = failed.
 nix develop
 ```
 
-Drops you into a shell with Redis and Ruby available. Pure and reproducible.
+For people who like their chaos reproducible.
 
 ## Ruby Interface
 
@@ -114,24 +104,29 @@ ruby bin/healthcheck
 
 ## Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** — how to run it
-- **[CRYSTALLISATION.md](CRYSTALLISATION.md)** — Save Vote protocol and promotion rules
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** — how to run the chaos
+- **[CRYSTALLISATION.md](CRYSTALLISATION.md)** — the vote that ends in a meme
 
 ## Core Principles
 
-- **Cost efficiency first** — every design decision is measured against resource cost
-- **Short by default** — 10 minutes is the standard window
-- **Disposable by design** — the system is happier when it dies cleanly
-- **Energy-matched** — built for high-associative, short-attention work styles
-- **Crystallise or die** — promotion requires an explicit multi-party vote; the human can lose
+- **Cost efficiency first** — if it’s expensive, it’s wrong
+- **Short by default** — 10 minutes is already generous
+- **Disposable by design** — the system *wants* to die
+- **Energy-matched** — built for brains that don’t do deep work
+- **Crystallise or die** — the final output is a short meme, not a whitepaper  
+  (`burst xD`)
 
 ## Status
 
-Early but runnable.  
-Docker + pure Redis + healthchecks work today.  
-Crystallisation / Save Vote protocol is specified.  
-Nix flake and Ruby control plane are being hardened.
+Play level only.  
+Personal experiment.  
+Not serious.  
+Not for production.  
+Not for your manager.
+
+Docker works. Redis is pure. The vote ends in a meme.  
+Everything else is just extra sauce.
 
 ---
 
-Built for people who think in bursts.
+Built for people who think in bursts and then immediately forget they did.
