@@ -15,14 +15,6 @@ module EBC
     HAIKU_MODEL       = ENV.fetch("HAIKU_MODEL", "claude-haiku-4-5")
     OPUS_MODEL        = ENV.fetch("OPUS_MODEL", "claude-opus-4-8")
 
-    # ElevenLabs hears us — Scribe tags laughter inline — and gives the
-    # judge a voice so its verdict can be heard instead of read.
-    ELEVENLABS_API_KEY   = ENV["ELEVENLABS_API_KEY"]
-    ELEVENLABS_BASE_URL  = ENV.fetch("ELEVENLABS_BASE_URL", "https://api.elevenlabs.io/v1")
-    ELEVENLABS_VOICE_ID  = ENV.fetch("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
-    ELEVENLABS_STT_MODEL = ENV.fetch("ELEVENLABS_STT_MODEL", "scribe_v1")
-    ELEVENLABS_TTS_MODEL = ENV.fetch("ELEVENLABS_TTS_MODEL", "eleven_multilingual_v2")
-
     # The photo is the only thing that outlives a burst.
     FRAME_COUNT = Integer(ENV.fetch("EBC_FRAME_COUNT", "4"))
     PHOTO_DIR   = ENV.fetch("EBC_PHOTO_DIR", "photos")

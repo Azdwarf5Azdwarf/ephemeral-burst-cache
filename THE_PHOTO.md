@@ -14,9 +14,8 @@ the end of an actual evening.
 2. **The judge speaks.** Claude Opus 4.8 reads the whole thing and says
    whatever it wants — as long or short as it likes, warm or sharp as it
    deserves. It is the only participant not bound to rhyme.
-3. **You hear it once.** ElevenLabs speaks the verdict aloud. It is never
-   written to disk. If no audio player is available it prints once instead —
-   still unsaved, still gone when you close the terminal.
+3. **You get it once.** The verdict is printed and never written to disk —
+   gone the moment you close the terminal.
 4. On its way out the judge names the **mood** and describes the **scene**.
 5. **The picture is taken.** Grok draws the three poets, four times over,
    each frame a moment apart.
@@ -48,12 +47,11 @@ artifact — it's the picture telling the truth about who was real.
 ## The filename is the memory
 
 ```
-photos/2026-08-15-delighted-4laughs.gif
+photos/2026-08-15-delighted.gif
 ```
 
-Date, mood, and the number of times someone actually laughed — counted from
-what ElevenLabs heard, not guessed by a model. The mood comes from the judge;
-the laughs come from the room.
+The date, and how it felt. The mood comes from the judge, which is the only
+thing in the pipeline that read the whole conversation.
 
 This is the point. You should be able to open that folder months later and
 tell, without opening a single file, which nights were good ones. The album

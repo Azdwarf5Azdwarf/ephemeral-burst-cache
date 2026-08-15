@@ -63,11 +63,9 @@ module EBC
     def user_prompt(burst, thread)
       who = burst.participants
       transcript = thread.map { |m| "#{m["author"]}:\n#{m["text"]}" }.join("\n\n")
-      laughs = burst.laughter
 
       <<~MSG
         Who was here: #{who.empty? ? "one person" : who.join(", ")} — plus the poets.
-        Laughter heard: #{laughs}.
 
         #{transcript}
       MSG

@@ -64,18 +64,9 @@ results << check("Grok API key (camera)") do
   !EBC::Config::XAI_API_KEY.to_s.empty?
 end
 
-results << check("ElevenLabs API key (voice)") do
-  !EBC::Config::ELEVENLABS_API_KEY.to_s.empty?
-end
-
 results << check("GIF tool (ImageMagick)") do
   EBC::GroupPhoto::GIF_TOOLS.any? { |t| system("command -v #{t} > /dev/null 2>&1") }
 end
-
-# Not required: without a player the judge is read once instead of heard once,
-# and either way nothing is written down.
-audible = EBC::Voice::PLAYERS.any? { |p| system("command -v #{p} > /dev/null 2>&1") }
-puts "#{"Audio player (optional)".ljust(32)} #{audible ? "OK" : "none — judge will be printed"}"
 
 puts
 if results.all?

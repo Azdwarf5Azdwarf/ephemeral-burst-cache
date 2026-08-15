@@ -80,20 +80,6 @@ module EBC
       redis.lrange(key(:participants), 0, -1)
     end
 
-    # How much of this was actually funny, counted from what ElevenLabs heard.
-    def add_laughter(count)
-      return laughter if count.to_i.zero?
-
-      remaining = alive_ttl
-      total = redis.incrby(key(:laughter), count.to_i)
-      redis.expire(key(:laughter), remaining)
-      total
-    end
-
-    def laughter
-      redis.get(key(:laughter)).to_i
-    end
-
     def kill
       keys = redis.keys("burst:#{uuid}:*")
       keys.empty? ? 0 : redis.del(*keys)

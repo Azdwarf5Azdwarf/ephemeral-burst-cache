@@ -2,7 +2,6 @@
 
 require_relative "ebc/config"
 require_relative "ebc/grok_client"
-require_relative "ebc/voice"
 require_relative "ebc/sonnet_agent"
 require_relative "ebc/burst"
 require_relative "ebc/judge"
