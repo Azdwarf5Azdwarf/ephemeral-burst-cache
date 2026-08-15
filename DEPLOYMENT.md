@@ -1,43 +1,46 @@
 # Deployment Guide
 
 Ephemeral Burst Cache is designed to be disposable. The preferred deployment
-is short-lived and local. Long-running persistent deployments defeat the
-purpose.
+is short-lived and local — you run it on the machine you're walking around
+with. Long-running persistent deployments defeat the purpose.
 
-**Primary metric: cost efficiency.** One Redis container, one API vendor,
-three images per burst.
+**Primary metric: cost efficiency.** One Redis container, short bursts, and
+one picture at the end.
 
 ---
 
 ## 1. Prerequisites
 
 - Docker + Docker Compose (for Redis)
-- Ruby 3.3 (`bundle install` pulls the gem dependencies)
-- An xAI API key — Grok generates the haikus and the memes
-- An Anthropic API key — Claude Opus is the last reasoning model
-  (cleans up the thread, saves the important stuff if needed)
+- Ruby 3.3 (`bundle install` pulls the two gems)
+- **ImageMagick** — draws the poets into your photo and assembles the GIF.
+  Without it, `burst photo` fails with a clear error.
+- *Optional:* an audio player (`ffplay`, `afplay`, `mpv`, `aplay`, `paplay`)
+  so the judge can be heard. Without one it prints once instead — either way
+  the verdict is never written to disk.
+
+`nix develop` provides all of the above.
+
+Three API keys:
 
 ```bash
 cp .env.example .env
-export XAI_API_KEY=...
-export ANTHROPIC_API_KEY=...
+export ANTHROPIC_API_KEY=...   # 3 poets + the judge
+export XAI_API_KEY=...         # the camera
+export ELEVENLABS_API_KEY=...  # ears and voice
 bundle install
 ```
 
 ---
 
-## 2. Local Docker (Recommended)
+## 2. Local Docker (recommended)
 
 ```bash
 docker compose up -d
 ```
 
-This launches a pure Redis instance with:
-
-- No RDB snapshots (`--save ""`)
-- No AOF (`--appendonly no`)
-- Container-level healthcheck (`redis-cli ping`)
-- Port `6379` exposed
+Pure Redis with no RDB snapshots (`--save ""`), no AOF (`--appendonly no`),
+a container healthcheck, and port `6379` exposed.
 
 Verify:
 
@@ -45,23 +48,23 @@ Verify:
 ruby bin/healthcheck
 ```
 
-Stop / destroy:
+Stop:
 
 ```bash
 docker compose down
-# or simply let the container die — nothing is persisted
+# or just let it die — nothing is persisted
 ```
 
 ---
 
-## 3. Nix Development Shell
+## 3. Nix development shell
 
 ```bash
 nix develop
 ```
 
-Provides `redis`, `ruby_3_3`, and `docker-compose`. Run Redis manually if you
-prefer:
+Provides `redis`, `ruby_3_3`, `docker-compose`, `imagemagick`, and `ffmpeg`.
+Run Redis manually if you prefer:
 
 ```bash
 redis-server --save "" --appendonly no
@@ -79,66 +82,67 @@ export REDIS_URL="rediss://..."
 ruby bin/healthcheck   # confirms persistence and AOF are disabled
 ```
 
-Treat the endpoint as disposable, like everything else here.
-
 ---
 
-## 5. Running a Burst
+## 5. Running a burst
 
 ```bash
 ruby bin/burst start 600
-ruby bin/burst say <uuid> "your message"
-ruby bin/burst thread <uuid>
-ruby bin/burst crystallise <uuid>
-ruby bin/burst curate <uuid>
+ruby bin/burst join <uuid> Sam
+ruby bin/burst say <uuid> "your line"
+ruby bin/burst listen <uuid> walk.m4a
+ruby bin/burst photo <uuid> us.jpg
 ruby bin/burst kill <uuid>
 ```
 
-All keys live under `burst:{uuid}:*` and share the burst's TTL. Two kinds of
-artifact can outlive a burst: crystallised memes in `memes/` (`EBC_MEME_DIR`),
-and — when Opus decides the thread earned it — a distilled note in `saved/`
-(`EBC_SAVE_DIR`).
+All keys live under `burst:{uuid}:*` — thread, participants, and laughter all
+share the burst's TTL and vanish together. **The only artifact that outlives a
+burst is the GIF in `photos/`** (`EBC_PHOTO_DIR`).
 
 ---
 
 ## Configuration
 
-| Variable            | Default                     | Purpose                        |
-|---------------------|-----------------------------|--------------------------------|
-| `XAI_API_KEY`       | *(required)*                | Grok API auth (generation)     |
-| `ANTHROPIC_API_KEY` | *(required)*                | Claude Opus auth (reasoning)   |
-| `REDIS_URL`         | `redis://127.0.0.1:6379/0`  | Burst storage                  |
-| `XAI_BASE_URL`      | `https://api.x.ai/v1`       | Grok API endpoint              |
-| `GROK_CHAT_MODEL`   | `grok-4-fast-non-reasoning` | Haiku agents + prompt writer   |
-| `GROK_IMAGE_MODEL`  | `grok-2-image`              | Meme rendering                 |
-| `OPUS_MODEL`        | `claude-opus-5`             | The last reasoning model       |
-| `EBC_MEME_DIR`      | `memes`                     | Where crystallised memes land  |
-| `EBC_SAVE_DIR`      | `saved`                     | Where Opus's saved notes land  |
+| Variable | Default | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | *(required)* | Poets and judge |
+| `XAI_API_KEY` | *(required)* | The camera |
+| `ELEVENLABS_API_KEY` | *(required)* | STT with laughter tags, and TTS |
+| `REDIS_URL` | `redis://127.0.0.1:6379/0` | Burst storage |
+| `HAIKU_MODEL` | `claude-haiku-4-5` | The three poets |
+| `OPUS_MODEL` | `claude-opus-4-8` | The judge |
+| `GROK_IMAGE_MODEL` | `grok-2-image` | Image generation |
+| `ELEVENLABS_VOICE_ID` | `21m00Tcm4TlvDq8ikWAM` | The judge's voice |
+| `ELEVENLABS_STT_MODEL` | `scribe_v1` | Tags `(laughs)` inline |
+| `ELEVENLABS_TTS_MODEL` | `eleven_multilingual_v2` | Speaking the verdict |
+| `EBC_FRAME_COUNT` | `4` | Frames in the animated photo |
+| `EBC_PHOTO_DIR` | `photos` | Where the pictures land |
 
-Grok model names follow xAI's catalogue — check their docs if a default has
-been retired and override via env. `claude-opus-5` is a stable alias on the
-Anthropic API.
+Model names follow each vendor's catalogue — override via env if a default is
+retired. Note `claude-3-opus` is **retired** and cannot be used; `claude-opus-4-8`
+is its documented replacement.
 
 ---
 
-## Health Checks
+## Health checks
 
 Two layers:
 
-1. **Docker healthcheck** — runs continuously inside the container (`redis-cli ping`).
-2. **Ruby healthcheck** (`bin/healthcheck`) — verifies connectivity,
-   persistence off, AOF off, namespace isolation, TTL enforcement, and that
-   both API keys are configured.
+1. **Docker healthcheck** — runs continuously in the container (`redis-cli ping`).
+2. **Ruby healthcheck** (`bin/healthcheck`) — Redis connectivity, persistence
+   off, AOF off, namespace isolation, TTL enforcement, all three API keys, and
+   the presence of ImageMagick. It also reports whether an audio player exists,
+   which is informational rather than required.
 
-Exit code `0` = healthy, `1` = failed. Suitable for CI or pre-burst validation.
+Exit `0` healthy, `1` failed.
 
 ---
 
-## Design Constraints
+## Design constraints
 
 - **Never enable persistence** (no AOF, no RDB).
 - Prefer short TTLs (300–900 seconds).
 - Treat every deployment as temporary.
-- If you need multi-node or long-lived state, this is the wrong tool.
-- If you find yourself adding volumes, backups, or dashboards, you are
-  building a different system.
+- Nothing but the photo is allowed to outlive a burst — no transcripts, no
+  summaries, no saved verdicts. If you find yourself adding a place to store
+  what was said, you are building a different system.
