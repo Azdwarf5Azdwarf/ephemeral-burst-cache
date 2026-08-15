@@ -68,6 +68,16 @@ ruby bin/burst kill
 
 The Ruby scripts manage burst lifecycle, namespace isolation, and forced crystallisation hooks.
 
+## Deployment
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full instructions covering:
+
+- Local Docker
+- Nix development shell
+- Serverless / Upstash ephemeral Redis
+- Ruby control plane usage
+- Explicit design constraints
+
 ## Core Principles
 
 - **Short by default** — 10 minutes is the standard window
