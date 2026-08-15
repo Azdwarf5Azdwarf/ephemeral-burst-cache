@@ -1,11 +1,11 @@
 {
-  description = "Ephemeral Burst Cache – pure Redis + Ruby environment";
+  description = "Ephemeral Burst Cache – pure Redis + Ruby, and a camera";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: 
+  outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -15,6 +15,8 @@
           redis
           ruby_3_3
           docker-compose
+          imagemagick   # draws the poets into your photo, assembles the GIF
+          ffmpeg        # ffplay, so the judge can be heard instead of read
         ];
 
         shellHook = ''

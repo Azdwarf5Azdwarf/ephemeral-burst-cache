@@ -16,7 +16,7 @@ module EBC
       @redis ||= Redis.new(url: Config::REDIS_URL)
     end
 
-    def self.start(ttl: Config::DEFAULT_TTL)
+    def self.start(ttl: Config::DEFAULT_TTL, host: "you")
       burst = new(SecureRandom.uuid)
       meta = {
         uuid: burst.uuid,
@@ -25,6 +25,7 @@ module EBC
         status: "live"
       }
       redis.set(burst.key(:meta), meta.to_json, ex: ttl)
+      burst.add_participant(host)
       burst
     end
 
@@ -52,9 +53,7 @@ module EBC
     end
 
     def post(author, text)
-      remaining = ttl_remaining
-      raise Dead, "burst #{uuid} is dead or never existed" unless remaining.positive?
-
+      remaining = alive_ttl
       entry = { author: author, text: text, at: Time.now.utc.iso8601 }
       redis.rpush(key(:thread), entry.to_json)
       # The thread never outlives the burst meta.
@@ -66,12 +65,50 @@ module EBC
       redis.lrange(key(:thread), 0, -1).map { |raw| JSON.parse(raw) }
     end
 
+    # Everyone who showed up, in the order they arrived — the cast of the
+    # photo. Like everything else here, they expire with the burst.
+    def add_participant(name)
+      remaining = alive_ttl
+      return name if participants.include?(name)
+
+      redis.rpush(key(:participants), name)
+      redis.expire(key(:participants), remaining)
+      name
+    end
+
+    def participants
+      redis.lrange(key(:participants), 0, -1)
+    end
+
+    # How much of this was actually funny, counted from what ElevenLabs heard.
+    def add_laughter(count)
+      return laughter if count.to_i.zero?
+
+      remaining = alive_ttl
+      total = redis.incrby(key(:laughter), count.to_i)
+      redis.expire(key(:laughter), remaining)
+      total
+    end
+
+    def laughter
+      redis.get(key(:laughter)).to_i
+    end
+
     def kill
       keys = redis.keys("burst:#{uuid}:*")
       keys.empty? ? 0 : redis.del(*keys)
     end
 
     private
+
+    # Nothing in a burst may outlive the burst itself, so every write checks
+    # the clock first and pins the new key to whatever time is left.
+    def alive_ttl
+      remaining = ttl_remaining
+      raise Dead, "burst #{uuid} is dead or never existed" unless remaining.positive?
+
+      remaining
+    end
 
     def redis
       self.class.redis
