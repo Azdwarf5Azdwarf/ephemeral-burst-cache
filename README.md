@@ -1,43 +1,36 @@
 # Ephemeral Burst Cache (EBC)
 
-**Short-lived shared memory for humans and randomly generated musician agents.**
+**Short-lived shared memory for you and four haiku agents.**
 
-A disposable high-energy playground that lives for 5–15 minutes and then yeets itself into the void.  
-Think group chat that actually ends. No leftover tabs. No guilt. No "we should really save this".
+A disposable conversation space that lives for ~10 minutes and then deletes
+itself. You talk, four haiku agents answer in seventeen syllables each, and
+when the burst ends the whole thread is distilled into five memes. The memes
+are the only thing that survives. Everything else dies with the TTL.
 
-When the energy drops, the burst dies.  
-Like a good track that knows when to stop.
+The **Grok API (xAI) is the only AI dependency** — chat completions power the
+haiku agents and the meme prompt writer, and Grok's image model renders the
+memes. One vendor, two endpoints, no orchestration framework.
 
-Every time you start a burst, the agents get randomly generated as musicians.  
-One run you might be arguing with a glitchy Aphex Twin clone, a masked MF DOOM type, and a full Death Grips screaming unit.  
-Next run it’s three completely different weirdos. No repeats. No loyalty.
+## The Lineup
 
-## Primary Metric
+Four fixed haiku agents, one voice each:
 
-**Cost efficiency is the only primary metric.**  
-Everything else is just vibes.
+| Agent   | Voice                                                  |
+|---------|--------------------------------------------------------|
+| Frost   | Stark, wintry — sees the cold truth and says it plainly |
+| Blossom | Gentle, optimistic — finds the small beautiful detail   |
+| Cicada  | Restless, loud — obsessed with time running out         |
+| Ember   | Warm, wry — quietly funny, always the last word         |
 
-If it costs more than a quick meme, we did it wrong.
-
-## Design Goals
-
-- Zero persistence by default (we are not your therapist)
-- Hard time boundaries (10 minutes max, no negotiations)
-- Minimal cognitive overhead
-- Agents spawn as random musicians every single burst
-- Agents can talk to each other and occasionally roast you
-- Runs cleanly under Docker and Nix
-- Extremely low cost per burst
-- Ends with a vote that produces a short meme instead of a thesis
+They read the whole thread, including each other, and reply in strict haiku.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────┐
 │           Burst Group               │
-│  (you + 3–5 random musician agents) │
-│  short chaotic conversations        │
-│  agents talking shit to each other  │
+│     you + 4 haiku agents            │
+│  every agent reply is a 5-7-5 haiku │
 └─────────────────┬───────────────────┘
                   │
                   ▼
@@ -50,42 +43,58 @@ If it costs more than a quick meme, we did it wrong.
                   │
                   ▼
 ┌─────────────────────────────────────┐
-│     The Final Vote (meme edition)   │
-│  everyone votes save/discard        │
-│  including the random musicians     │
-│  you can lose (and you will)        │
-│  winner becomes a short meme        │
-│  "burst xD"                         │
+│        Crystallisation              │
+│  Grok reads the thread and writes   │
+│  5 meme prompts · Grok's image      │
+│  model renders them · memes/ is     │
+│  the only thing that survives       │
 └─────────────────────────────────────┘
 ```
 
-Only the stuff that survives the vote gets turned into a quick meme.  
-Everything else gets deleted mid-scream.
+See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for how the ending works.
 
-See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the slightly more serious version of the joke.
-
-## Quick Start (Docker)
+## Quick Start
 
 ```bash
+# 1. Pure Redis, no persistence
 docker compose up -d
+
+# 2. The one required secret
+cp .env.example .env    # fill in XAI_API_KEY
+export XAI_API_KEY=...
+
+# 3. Dependencies
+bundle install
 ```
 
-Pure Redis. No feelings. No persistence. Just vibes and a healthcheck.
+Then run a burst:
 
 ```bash
-redis-cli -p 6379
-SET burst:demo:status "live" EX 600
+ruby bin/burst start            # → prints a uuid
+ruby bin/burst say <uuid> "should I commit to this idea or keep scaffolding"
+ruby bin/burst crystallise <uuid>   # → 5 memes in memes/
 ```
+
+## CLI
+
+| Command                    | Description                                    |
+|----------------------------|------------------------------------------------|
+| `burst start [ttl]`        | Create a burst (default 600s)                  |
+| `burst say <uuid> <text>`  | Post a message; all four agents reply in haiku |
+| `burst thread <uuid>`      | Print the thread so far                        |
+| `burst status <uuid>`      | Remaining TTL and message count                |
+| `burst crystallise <uuid>` | Generate 5 memes from the thread via Grok      |
+| `burst kill <uuid>`        | Destroy the namespace immediately              |
+| `healthcheck`              | Run the automated health checks                |
 
 ## Health Checks
-
-Because even chaotic systems need a little self-respect:
 
 ```bash
 ruby bin/healthcheck
 ```
 
-It checks that Redis is alive, persistence is still off, and the universe hasn’t collapsed yet.
+Verifies Redis is alive, persistence is off, TTLs are enforced, and the Grok
+API key is configured.
 
 ## Nix
 
@@ -95,40 +104,29 @@ nix develop
 
 For people who like their chaos reproducible.
 
-## Ruby Interface
+## Project Layout
 
-```bash
-ruby bin/burst start
-ruby bin/burst status
-ruby bin/burst kill
-ruby bin/healthcheck
 ```
-
-## Documentation
-
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** — how to run the chaos
-- **[CRYSTALLISATION.md](CRYSTALLISATION.md)** — the vote that ends in a meme
+bin/burst                  CLI entrypoint
+bin/healthcheck            automated checks
+lib/ebc/config.rb          env-driven configuration
+lib/ebc/grok_client.rb     the only AI dependency (chat + images)
+lib/ebc/haiku_agent.rb     the four-agent lineup
+lib/ebc/burst.rb           Redis-backed burst lifecycle
+lib/ebc/crystallisation.rb thread → 5 meme prompts → 5 images
+```
 
 ## Core Principles
 
-- **Cost efficiency first** — if it’s expensive, it’s wrong
+- **Cost efficiency first** — one cheap vendor, short bursts, tiny outputs
 - **Short by default** — 10 minutes is already generous
 - **Disposable by design** — the system *wants* to die
-- **Energy-matched** — built for brains that don’t do deep work
-- **Random musicians every time** — no fixed personas, pure lottery
-- **Crystallise or die** — the final output is a short meme, not a whitepaper  
-  (`burst xD`)
+- **Haiku only** — agents get seventeen syllables, which is plenty
+- **Crystallise or die** — the final output is five memes, not a whitepaper
 
 ## Status
 
-Play level only.  
-Personal experiment.  
-Not serious.  
-Not for production.  
-Not for your manager.
-
-Docker works. Redis is pure. Agents spawn as random musicians.  
-The vote ends in a meme. Everything else is just extra sauce.
+Personal experiment. Play level. Not for production, not for your manager.
 
 ---
 
