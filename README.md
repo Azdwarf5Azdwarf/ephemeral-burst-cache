@@ -6,6 +6,13 @@ A disposable, high-energy working memory that lives for 5–15 minutes and then 
 
 When the energy drops, the burst dies. No residual state. No long-lived connections.
 
+## Primary Metric
+
+**Cost efficiency is the only primary metric.**
+
+Everything else (latency, features, convenience) is secondary.  
+The system is considered successful when it delivers useful short-lived coordination at the lowest possible resource cost and then disappears cleanly.
+
 ## Design Goals
 
 - Zero persistence by default
@@ -13,6 +20,7 @@ When the energy drops, the burst dies. No residual state. No long-lived connecti
 - Minimal cognitive overhead
 - Native multi-agent support
 - Runs cleanly under Docker and Nix
+- Extremely low cost per burst
 
 ## Architecture
 
@@ -38,10 +46,10 @@ When the energy drops, the burst dies. No residual state. No long-lived connecti
 ## Quick Start (Docker)
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
-This starts a pure Redis instance with persistence completely disabled.
+This starts a pure Redis instance with persistence completely disabled and an automated healthcheck.
 
 Connect:
 
@@ -49,6 +57,30 @@ Connect:
 redis-cli -p 6379
 SET burst:demo:status "live" EX 600
 ```
+
+## Health Checks
+
+Automated checks are included:
+
+**Docker healthcheck** (runs automatically):
+```yaml
+healthcheck:
+  test: ["CMD", "redis-cli", "ping"]
+```
+
+**Ruby healthcheck** (manual or CI):
+```bash
+ruby bin/healthcheck
+```
+
+It verifies:
+- Redis connectivity
+- Persistence is disabled (`save` empty)
+- AOF is off
+- Namespace isolation works
+- TTL enforcement works
+
+Exit code `0` = healthy, `1` = failed.
 
 ## Nix
 
@@ -64,9 +96,8 @@ Drops you into a shell with Redis and Ruby available. Pure and reproducible.
 ruby bin/burst start
 ruby bin/burst status
 ruby bin/burst kill
+ruby bin/healthcheck
 ```
-
-The Ruby scripts manage burst lifecycle, namespace isolation, and forced crystallisation hooks.
 
 ## Deployment
 
@@ -80,6 +111,7 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full instructions covering:
 
 ## Core Principles
 
+- **Cost efficiency first** — every design decision is measured against resource cost
 - **Short by default** — 10 minutes is the standard window
 - **Disposable by design** — the system is happier when it dies cleanly
 - **Energy-matched** — built for high-associative, short-attention work styles
@@ -88,7 +120,7 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full instructions covering:
 ## Status
 
 Early but runnable.  
-Docker + pure Redis works today.  
+Docker + pure Redis + healthchecks work today.  
 Nix flake and Ruby control plane are being hardened.
 
 ---
