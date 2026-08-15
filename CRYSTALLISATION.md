@@ -24,8 +24,11 @@ Final output style: **burst xD**
 ## Participants
 
 - You
-- 3–5 agents who may or may not respect you
+- 3–5 agents who spawn as **random musicians** every single burst
 
+No fixed personas.  
+One burst you’re dealing with a glitchy IDM producer, a masked abstract rapper, and a noise terrorist.  
+Next burst it’s three completely different weirdos.  
 Equal voting weight. Democracy is a mistake and we fully embrace it.
 
 ---
@@ -34,7 +37,7 @@ Equal voting weight. Democracy is a mistake and we fully embrace it.
 
 1. Burst ends.
 2. Control plane pulls the short candidate outputs.
-3. Everyone (including the AIs) looks at external context if they feel like it.
+3. Everyone (including the random musician agents) looks at external context if they feel like it.
 4. Everyone votes `save` or `discard` with one short reason.
 5. Majority wins.
 6. Whatever survives gets compressed into a short meme.
@@ -74,6 +77,7 @@ Stronger crypto can wait until someone actually cares.
 
 - The vote lives outside the Redis burst (the "asking the gods" moment)
 - Agents are allowed to outvote you
+- Agents are freshly generated musicians every time — no continuity, no lore, pure lottery
 - The whole point is that most things should die
 - The few things that live become memes
 
@@ -81,8 +85,7 @@ Stronger crypto can wait until someone actually cares.
 
 ## Spirit
 
-Death Grips energy: intense, short, then gone.  
-Aphex Twin energy: experimental and slightly wrong.  
-MF DOOM energy: masked, clever, refuses to explain itself.
+Every burst is a new lineup.  
+No fixed band. No loyalty. Just random musicians arguing for 10 minutes and then vanishing.
 
 If the final meme doesn’t make you smirk, the burst was a failure.
