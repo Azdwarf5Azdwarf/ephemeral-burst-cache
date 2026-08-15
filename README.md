@@ -21,6 +21,7 @@ The system is considered successful when it delivers useful short-lived coordina
 - Native multi-agent support
 - Runs cleanly under Docker and Nix
 - Extremely low cost per burst
+- Explicit multi-party promotion instead of automatic saving
 
 ## Architecture
 
@@ -31,7 +32,6 @@ The system is considered successful when it delivers useful short-lived coordina
 │                                     │
 │  short parallel conversations       │
 │  agents talk to each other          │
-│  forced crystallisation at end      │
 └─────────────────┬───────────────────┘
                   │
                   ▼
@@ -40,8 +40,21 @@ The system is considered successful when it delivers useful short-lived coordina
 │  pure Redis · no AOF · no RDB       │
 │  namespace: burst:{uuid}:*          │
 │  hard TTL 600–900s                  │
+└─────────────────┬───────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────┐
+│     Crystallisation / Save Vote     │
+│  external · authenticated majority  │
+│  human + agents vote                │
+│  grounded in external memory        │
+│  human can lose                     │
 └─────────────────────────────────────┘
 ```
+
+Only items that survive the Save Vote are promoted. Everything else dies with the burst.
+
+See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for the full protocol.
 
 ## Quick Start (Docker)
 
@@ -99,15 +112,10 @@ ruby bin/burst kill
 ruby bin/healthcheck
 ```
 
-## Deployment
+## Documentation
 
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full instructions covering:
-
-- Local Docker
-- Nix development shell
-- Serverless / Upstash ephemeral Redis
-- Ruby control plane usage
-- Explicit design constraints
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** — how to run it
+- **[CRYSTALLISATION.md](CRYSTALLISATION.md)** — Save Vote protocol and promotion rules
 
 ## Core Principles
 
@@ -115,12 +123,13 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for full instructions covering:
 - **Short by default** — 10 minutes is the standard window
 - **Disposable by design** — the system is happier when it dies cleanly
 - **Energy-matched** — built for high-associative, short-attention work styles
-- **Crystallise or die** — every participant must emit a short systemised POV before the burst ends
+- **Crystallise or die** — promotion requires an explicit multi-party vote; the human can lose
 
 ## Status
 
 Early but runnable.  
 Docker + pure Redis + healthchecks work today.  
+Crystallisation / Save Vote protocol is specified.  
 Nix flake and Ruby control plane are being hardened.
 
 ---
