@@ -39,11 +39,26 @@ module EBC
 
     # `rhyme_with` is the previous poet's closing word, or nil to start fresh.
     def reply(thread, rhyme_with: nil)
+      ask(quatrain_brief, conversation(thread, rhyme_with))
+    end
+
+    # An adult has just walked in and asked what on earth is going on. Laugh
+    # it off — one line, still rhyming, because that is the only rule here.
+    def laugh_off(thread, said:, rhyme_with: nil)
+      parts = ["The conversation so far:\n\n#{transcript(thread)}"]
+      parts << "An adult just walked in and said:\n\n#{said}"
+      parts << %(They ended on the word "#{rhyme_with}".) if rhyme_with
+      ask(laugh_off_brief, parts.join("\n\n"))
+    end
+
+    private
+
+    def ask(brief, content)
       message = @client.messages.create(
         model: Config::HAIKU_MODEL,
         max_tokens: 400,
-        system_: system_prompt,
-        messages: [{ role: "user", content: user_prompt(thread, rhyme_with) }]
+        system_: brief,
+        messages: [{ role: "user", content: content }]
       )
       return nil if message.stop_reason == :refusal
 
@@ -51,30 +66,50 @@ module EBC
       text.empty? ? nil : text
     end
 
-    private
-
-    def system_prompt
+    def quatrain_brief
       <<~PROMPT
-        You are #{@name}, one of three poets in a ten-minute conversation that
-        will be deleted the moment it ends. Your voice: #{@voice}.
+        #{who_you_are}
 
         Reply with exactly one quatrain: four lines, rhyming ABAB. React to what
         was actually said — including what the other poets said. Speak like a
         person who happens to rhyme, not like a greeting card.
 
+        If you are given a word to rhyme with, your FIRST line must end on a
+        word that rhymes with it; your remaining lines follow your own ABAB
+        pattern from there.
+
         No preamble, no title, no explanation, no quotation marks. Four lines.
       PROMPT
     end
 
-    def user_prompt(thread, rhyme_with)
+    def laugh_off_brief
+      <<~PROMPT
+        #{who_you_are}
+
+        An adult has just walked in on all of you and demanded to know what on
+        earth you think you are doing.
+
+        Laugh it off. Reply with exactly ONE line — a shrug, a joke, an
+        unbothered aside. Do not apologise and do not explain yourselves.
+
+        If you are given a word to rhyme with, your line must end on a word that
+        rhymes with it. That word came from the adult, who does not rhyme. That
+        is the joke; land it without pointing at it.
+
+        No preamble, no quotation marks. One line.
+      PROMPT
+    end
+
+    def who_you_are
+      <<~PROMPT.strip
+        You are #{@name}, one of three poets in a ten-minute conversation that
+        will be deleted the moment it ends. Your voice: #{@voice}.
+      PROMPT
+    end
+
+    def conversation(thread, rhyme_with)
       parts = ["The conversation so far:\n\n#{transcript(thread)}"]
-      if rhyme_with
-        parts << <<~HANDOFF.strip
-          The poet before you ended on the word "#{rhyme_with}". Your first line
-          must end on a word that rhymes with "#{rhyme_with}". Your remaining
-          lines follow your own ABAB pattern from there.
-        HANDOFF
-      end
+      parts << %(The voice before you ended on the word "#{rhyme_with}".) if rhyme_with
       parts.join("\n\n")
     end
 

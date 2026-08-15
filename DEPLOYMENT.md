@@ -21,7 +21,7 @@ Two API keys:
 
 ```bash
 cp .env.example .env
-export ANTHROPIC_API_KEY=...   # 3 poets + the judge
+export ANTHROPIC_API_KEY=...   # 3 poets + the adult
 export XAI_API_KEY=...         # the camera
 bundle install
 ```
@@ -99,11 +99,11 @@ the GIF in `photos/`** (`EBC_PHOTO_DIR`).
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | *(required)* | Poets and judge |
+| `ANTHROPIC_API_KEY` | *(required)* | Poets and the adult |
 | `XAI_API_KEY` | *(required)* | The camera |
 | `REDIS_URL` | `redis://127.0.0.1:6379/0` | Burst storage |
 | `HAIKU_MODEL` | `claude-haiku-4-5` | The three poets |
-| `OPUS_MODEL` | `claude-opus-4-8` | The judge |
+| `OPUS_MODEL` | `claude-opus-4-8` | The adult who opens the door |
 | `GROK_IMAGE_MODEL` | `grok-2-image` | Image generation |
 | `EBC_FRAME_COUNT` | `4` | Frames in the animated photo |
 | `EBC_PHOTO_DIR` | `photos` | Where the pictures land |
