@@ -1,69 +1,86 @@
 # Ephemeral Burst Cache (EBC)
 
-Short-lived, zero-persistence working memory for a human + agents during a high-energy 5–15 minute window.
+**Short-lived shared memory for humans and agents.**
 
-When the energy drops, everything dies. No residual state. No saved connections. No cleanup tax.
+A disposable, high-energy working memory that lives for 5–15 minutes and then completely disappears. Designed for parallel short-burst conversations between a human and multiple agents.
 
-## Core Idea
+When the energy drops, the burst dies. No residual state. No long-lived connections.
 
-Most tools assume you want long-lived state.  
-This one assumes the opposite.
+## Design Goals
 
-You open a burst.  
-You and a few agents share a temporary namespace.  
-You talk fast, in short turns.  
-Agents can talk to you and to each other.  
-When the window ends (or the energy leaves), every participant — including you — must output one short systemised POV.  
-Then the entire burst is destroyed.
+- Zero persistence by default
+- Hard time boundaries
+- Minimal cognitive overhead
+- Native multi-agent support
+- Runs cleanly under Docker and Nix
 
-This matches high-associative, short-attention, high-energy working styles.
+## Architecture
 
-## Two Layers
-
-### 1. Ephemeral Burst Cache (EBC)
-The shared room.
-
-- Lifetime: hard TTL 600–900 seconds (default 10 min)
-- Persistence: none
-- Namespace: `burst:{uuid}:*`
-- Storage options: pure Redis (no AOF/RDB), Upstash free ephemeral, or in-process dict
-
-### 2. Burst Group
-The discussion that happens inside the room.
-
-- 3–5 agents + human
-- Parallel short conversations
-- Agents can address each other
-- Forced crystallisation at the end: every participant produces a short systemised point of view
-- Then the burst dies
-
-## Quick Local Spin-up
-
-```bash
-docker run --rm -it --name ebc -p 6379:6379 redis:alpine redis-server --save "" --appendonly no
+```
+┌─────────────────────────────────────┐
+│           Burst Group               │
+│  (human + 3–5 agents)               │
+│                                     │
+│  short parallel conversations       │
+│  agents talk to each other          │
+│  forced crystallisation at end      │
+└─────────────────┬───────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────┐
+│      Ephemeral Burst Cache          │
+│  pure Redis · no AOF · no RDB       │
+│  namespace: burst:{uuid}:*          │
+│  hard TTL 600–900s                  │
+└─────────────────────────────────────┘
 ```
 
-Then in another terminal:
+## Quick Start (Docker)
 
 ```bash
-redis-cli
+docker compose up
+```
+
+This starts a pure Redis instance with persistence completely disabled.
+
+Connect:
+
+```bash
+redis-cli -p 6379
 SET burst:demo:status "live" EX 600
 ```
 
-## Design Principles
+## Nix
 
-- Short by default
-- Disposable by design
-- No long-term connections
-- Energy-matched, not deep-work matched
-- Crystallise or die
+```bash
+nix develop
+```
+
+Drops you into a shell with Redis and Ruby available. Pure and reproducible.
+
+## Ruby Interface
+
+```bash
+ruby bin/burst start
+ruby bin/burst status
+ruby bin/burst kill
+```
+
+The Ruby scripts manage burst lifecycle, namespace isolation, and forced crystallisation hooks.
+
+## Core Principles
+
+- **Short by default** — 10 minutes is the standard window
+- **Disposable by design** — the system is happier when it dies cleanly
+- **Energy-matched** — built for high-associative, short-attention work styles
+- **Crystallise or die** — every participant must emit a short systemised POV before the burst ends
 
 ## Status
 
-Concept stage.  
-Minimal runnable version exists (Redis one-liner).  
-Wrapper scripts and multi-agent orchestration still to be built.
+Early but runnable.  
+Docker + pure Redis works today.  
+Nix flake and Ruby control plane are being hardened.
 
 ---
 
-Born from a conversation about short high-energy windows, loneliness, group chats that never happened, and the desire for infrastructure that dies when the charge leaves.
+Built for people who think in bursts.
