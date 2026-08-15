@@ -14,5 +14,11 @@ module EBC
 
     MEME_COUNT = 5
     MEME_DIR   = ENV.fetch("EBC_MEME_DIR", "memes")
+
+    # Claude Opus is the single reasoning model: the last step of the
+    # pipeline, cleaning up the thread and saving what matters (if anything).
+    ANTHROPIC_API_KEY = ENV["ANTHROPIC_API_KEY"]
+    OPUS_MODEL        = ENV.fetch("OPUS_MODEL", "claude-opus-5")
+    SAVE_DIR          = ENV.fetch("EBC_SAVE_DIR", "saved")
   end
 end

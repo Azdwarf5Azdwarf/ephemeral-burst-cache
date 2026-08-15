@@ -60,6 +60,10 @@ results << check("Grok API key configured") do
   !EBC::Config::XAI_API_KEY.to_s.empty?
 end
 
+results << check("Anthropic API key configured") do
+  !EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
+end
+
 puts
 if results.all?
   puts "All checks passed"

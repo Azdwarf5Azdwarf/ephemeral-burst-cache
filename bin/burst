@@ -10,7 +10,8 @@ def usage
       burst say <uuid> <text>   Post a message; the four haiku agents reply
       burst thread <uuid>       Print the thread so far
       burst status <uuid>       Show status and remaining TTL
-      burst crystallise <uuid>  Distil the thread into #{EBC::Config::MEME_COUNT} memes via Grok
+      burst crystallise <uuid>  #{EBC::Config::MEME_COUNT} memes via Grok, then Opus curates the thread
+      burst curate <uuid>       Opus only: clean up the thread, save what matters
       burst kill <uuid>         Destroy the namespace immediately
   USAGE
 end
@@ -72,6 +73,18 @@ when "crystallise", "crystallize"
     puts "  #{meme[:path]}"
     puts "    #{meme[:prompt]}"
   end
+  puts
+  if EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
+    puts "ANTHROPIC_API_KEY not set — skipping Opus curation"
+  else
+    path = EBC::Curator.new.run(burst)
+    puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
+  end
+
+when "curate"
+  burst = live_burst(ARGV[1])
+  path = EBC::Curator.new.run(burst)
+  puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
 
 when "kill"
   usage if ARGV[1].nil?

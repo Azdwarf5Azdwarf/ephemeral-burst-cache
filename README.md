@@ -4,12 +4,17 @@
 
 A disposable conversation space that lives for ~10 minutes and then deletes
 itself. You talk, four haiku agents answer in seventeen syllables each, and
-when the burst ends the whole thread is distilled into five memes. The memes
-are the only thing that survives. Everything else dies with the TTL.
+when the burst ends the thread is distilled into five memes — plus, if
+anything in it actually mattered, one short saved note. Everything else dies
+with the TTL.
 
-The **Grok API (xAI) is the only AI dependency** — chat completions power the
-haiku agents and the meme prompt writer, and Grok's image model renders the
-memes. One vendor, two endpoints, no orchestration framework.
+Exactly two AI dependencies, with a clean split:
+
+- **Grok (xAI) generates** — chat completions power the haiku agents and the
+  meme prompt writer, and Grok's image model renders the memes.
+- **Claude Opus reasons** — the last model in the pipeline. It cleans up the
+  conversation and saves the important stuff to `saved/` *if needed*; most
+  bursts should die, and Opus is told to be picky.
 
 ## The Lineup
 
@@ -46,8 +51,16 @@ They read the whole thread, including each other, and reply in strict haiku.
 │        Crystallisation              │
 │  Grok reads the thread and writes   │
 │  5 meme prompts · Grok's image      │
-│  model renders them · memes/ is     │
-│  the only thing that survives       │
+│  model renders them into memes/     │
+└─────────────────┬───────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────┐
+│    Curation (the last reasoning     │
+│    model) · Claude Opus cleans up   │
+│    the thread and saves what        │
+│    matters to saved/ — if anything  │
+│    does · then the TTL wins         │
 └─────────────────────────────────────┘
 ```
 
@@ -59,9 +72,10 @@ See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for how the ending works.
 # 1. Pure Redis, no persistence
 docker compose up -d
 
-# 2. The one required secret
-cp .env.example .env    # fill in XAI_API_KEY
+# 2. The two required secrets
+cp .env.example .env    # fill in XAI_API_KEY and ANTHROPIC_API_KEY
 export XAI_API_KEY=...
+export ANTHROPIC_API_KEY=...
 
 # 3. Dependencies
 bundle install
@@ -72,7 +86,7 @@ Then run a burst:
 ```bash
 ruby bin/burst start            # → prints a uuid
 ruby bin/burst say <uuid> "should I commit to this idea or keep scaffolding"
-ruby bin/burst crystallise <uuid>   # → 5 memes in memes/
+ruby bin/burst crystallise <uuid>   # → 5 memes in memes/, then Opus curates
 ```
 
 ## CLI
@@ -83,7 +97,8 @@ ruby bin/burst crystallise <uuid>   # → 5 memes in memes/
 | `burst say <uuid> <text>`  | Post a message; all four agents reply in haiku |
 | `burst thread <uuid>`      | Print the thread so far                        |
 | `burst status <uuid>`      | Remaining TTL and message count                |
-| `burst crystallise <uuid>` | Generate 5 memes from the thread via Grok      |
+| `burst crystallise <uuid>` | 5 memes via Grok, then Opus curates the thread |
+| `burst curate <uuid>`      | Opus only: clean up the thread, save what matters |
 | `burst kill <uuid>`        | Destroy the namespace immediately              |
 | `healthcheck`              | Run the automated health checks                |
 
@@ -93,8 +108,8 @@ ruby bin/burst crystallise <uuid>   # → 5 memes in memes/
 ruby bin/healthcheck
 ```
 
-Verifies Redis is alive, persistence is off, TTLs are enforced, and the Grok
-API key is configured.
+Verifies Redis is alive, persistence is off, TTLs are enforced, and both API
+keys are configured.
 
 ## Nix
 
@@ -110,19 +125,22 @@ For people who like their chaos reproducible.
 bin/burst                  CLI entrypoint
 bin/healthcheck            automated checks
 lib/ebc/config.rb          env-driven configuration
-lib/ebc/grok_client.rb     the only AI dependency (chat + images)
+lib/ebc/grok_client.rb     Grok: generation (chat + images)
 lib/ebc/haiku_agent.rb     the four-agent lineup
 lib/ebc/burst.rb           Redis-backed burst lifecycle
 lib/ebc/crystallisation.rb thread → 5 meme prompts → 5 images
+lib/ebc/curator.rb         Claude Opus: the last reasoning model
 ```
 
 ## Core Principles
 
-- **Cost efficiency first** — one cheap vendor, short bursts, tiny outputs
+- **Cost efficiency first** — cheap generation, short bursts, tiny outputs
 - **Short by default** — 10 minutes is already generous
 - **Disposable by design** — the system *wants* to die
 - **Haiku only** — agents get seventeen syllables, which is plenty
 - **Crystallise or die** — the final output is five memes, not a whitepaper
+- **Reason last** — Opus gets the final word on what survives, and its
+  default answer is "nothing"
 
 ## Status
 

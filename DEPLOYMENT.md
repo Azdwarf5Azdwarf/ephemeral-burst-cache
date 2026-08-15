@@ -12,12 +12,15 @@ five images per burst.
 ## 1. Prerequisites
 
 - Docker + Docker Compose (for Redis)
-- Ruby 3.3 (`bundle install` pulls the single gem dependency)
-- An xAI API key — the Grok API is the only AI dependency
+- Ruby 3.3 (`bundle install` pulls the gem dependencies)
+- An xAI API key — Grok generates the haikus and the memes
+- An Anthropic API key — Claude Opus is the last reasoning model
+  (cleans up the thread, saves the important stuff if needed)
 
 ```bash
 cp .env.example .env
 export XAI_API_KEY=...
+export ANTHROPIC_API_KEY=...
 bundle install
 ```
 
@@ -87,28 +90,34 @@ ruby bin/burst start 600
 ruby bin/burst say <uuid> "your message"
 ruby bin/burst thread <uuid>
 ruby bin/burst crystallise <uuid>
+ruby bin/burst curate <uuid>
 ruby bin/burst kill <uuid>
 ```
 
-All keys live under `burst:{uuid}:*` and share the burst's TTL. Crystallised
-memes are written to `memes/` (configurable via `EBC_MEME_DIR`) — the only
-artifact that outlives the burst.
+All keys live under `burst:{uuid}:*` and share the burst's TTL. Two kinds of
+artifact can outlive a burst: crystallised memes in `memes/` (`EBC_MEME_DIR`),
+and — when Opus decides the thread earned it — a distilled note in `saved/`
+(`EBC_SAVE_DIR`).
 
 ---
 
 ## Configuration
 
-| Variable           | Default                     | Purpose                       |
-|--------------------|-----------------------------|-------------------------------|
-| `XAI_API_KEY`      | *(required)*                | Grok API auth                 |
-| `REDIS_URL`        | `redis://127.0.0.1:6379/0`  | Burst storage                 |
-| `XAI_BASE_URL`     | `https://api.x.ai/v1`       | Grok API endpoint             |
-| `GROK_CHAT_MODEL`  | `grok-4-fast-non-reasoning` | Haiku agents + prompt writer  |
-| `GROK_IMAGE_MODEL` | `grok-2-image`              | Meme rendering                |
-| `EBC_MEME_DIR`     | `memes`                     | Where crystallised memes land |
+| Variable            | Default                     | Purpose                        |
+|---------------------|-----------------------------|--------------------------------|
+| `XAI_API_KEY`       | *(required)*                | Grok API auth (generation)     |
+| `ANTHROPIC_API_KEY` | *(required)*                | Claude Opus auth (reasoning)   |
+| `REDIS_URL`         | `redis://127.0.0.1:6379/0`  | Burst storage                  |
+| `XAI_BASE_URL`      | `https://api.x.ai/v1`       | Grok API endpoint              |
+| `GROK_CHAT_MODEL`   | `grok-4-fast-non-reasoning` | Haiku agents + prompt writer   |
+| `GROK_IMAGE_MODEL`  | `grok-2-image`              | Meme rendering                 |
+| `OPUS_MODEL`        | `claude-opus-5`             | The last reasoning model       |
+| `EBC_MEME_DIR`      | `memes`                     | Where crystallised memes land  |
+| `EBC_SAVE_DIR`      | `saved`                     | Where Opus's saved notes land  |
 
-Model names follow xAI's catalogue — check their docs if a default has been
-retired and override via env.
+Grok model names follow xAI's catalogue — check their docs if a default has
+been retired and override via env. `claude-opus-5` is a stable alias on the
+Anthropic API.
 
 ---
 
@@ -119,7 +128,7 @@ Two layers:
 1. **Docker healthcheck** — runs continuously inside the container (`redis-cli ping`).
 2. **Ruby healthcheck** (`bin/healthcheck`) — verifies connectivity,
    persistence off, AOF off, namespace isolation, TTL enforcement, and that
-   the Grok API key is configured.
+   both API keys are configured.
 
 Exit code `0` = healthy, `1` = failed. Suitable for CI or pre-burst validation.
 
