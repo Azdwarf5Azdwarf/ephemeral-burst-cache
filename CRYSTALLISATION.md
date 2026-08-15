@@ -1,103 +1,88 @@
 # Crystallisation & Save Vote Protocol
 
-After a burst ends, nothing is saved by default.
+(also known as "the part where we decide if this was actually funny")
 
-A short, external **Save Vote** decides what (if anything) is promoted out of the ephemeral namespace.
+After a burst ends, nothing is saved by default.  
+We run a quick vote. The winner gets turned into a short meme.  
+Everything else gets deleted like it never happened.
 
-This step lives *outside* the high-energy burst. It is the deliberate safety layer.
+Final output style: **burst xD**
 
 ---
 
 ## Goals
 
-- Disposal is the default
-- Promotion requires explicit multi-party agreement
-- Human can lose the vote
-- Decisions are grounded in external memory context via secure API calls
-- Cost efficiency remains the primary metric
+- Disposal is the default (as it should be)
+- Promotion requires a vote
+- You can (and probably will) lose
+- Agents get a real vote too
+- The only thing that survives is a short meme
+- Keep it cheap and stupid
 
 ---
 
 ## Participants
 
-- 1 human
-- 3–5 agents
+- You
+- 3–5 agents who may or may not respect you
 
-Each participant has equal voting weight by default.
+Equal voting weight. Democracy is a mistake and we fully embrace it.
 
 ---
 
-## Protocol (Authenticated Majority)
+## Protocol (Authenticated Majority, meme edition)
 
-This is the recommended starting protocol. It is simple, cheap, and sufficient for internal use.
+1. Burst ends.
+2. Control plane pulls the short candidate outputs.
+3. Everyone (including the AIs) looks at external context if they feel like it.
+4. Everyone votes `save` or `discard` with one short reason.
+5. Majority wins.
+6. Whatever survives gets compressed into a short meme.
+7. The rest is murdered with the burst namespace.
 
-### 1. Candidate Extraction
-At burst end the control plane collects short candidate outputs from the shared namespace.
+You can lose the vote.  
+This is a feature.
 
-### 2. Context Grounding
-Each voter (human + agents) may make secure API / MCP calls to external memory or tools to ground their decision.
+---
 
-### 3. Vote Submission
-Each voter submits a signed payload:
+## Final Output Format
 
-```json
-{
-  "burst_id": "uuid",
-  "voter_id": "human|agent-1|...",
-  "vote": "save|discard",
-  "reason": "one short sentence",
-  "context_refs": ["optional external references"],
-  "timestamp": "ISO-8601",
-  "signature": "..."
-}
+Not a document.  
+Not a summary.  
+Not a thoughtful reflection.
+
+Just a short meme energy dump, ideally ending with:
+
+```
+burst xD
 ```
 
-Signatures can be JWT, HMAC, or asymmetric keys. All communication happens over HTTPS.
-
-### 4. Tally
-A neutral tally endpoint (or local script) verifies signatures, counts votes, and produces:
-
-- Majority result
-- Per-voter record (for audit)
-- Short justification summary
-
-### 5. Promotion or Death
-- Items that receive majority **save** are written to durable storage.
-- Everything else is deleted with the burst namespace.
-
-The human can lose. That is intentional.
+If it’s longer than a tweet, we failed.
 
 ---
 
-## Security Properties (Current Protocol)
+## Security Properties
 
-| Property            | Status                          |
-|---------------------|---------------------------------|
-| Authenticity        | Yes (signed votes)              |
-| Integrity           | Yes (HTTPS + signatures)        |
-| Non-repudiation     | Yes                             |
-| Audit trail         | Yes                             |
-| Vote privacy        | No (voters are identifiable)    |
-| Threshold trust     | No (simple majority)            |
+We signed the votes so nobody can pretend they voted the other way.  
+That’s about as serious as this gets.
 
-Stronger protocols (blind signatures, threshold cryptography, MPC tallying) can be added later if needed. They are intentionally deferred to keep cost and complexity low.
+Stronger crypto can wait until someone actually cares.
 
 ---
 
 ## Design Notes
 
-- The vote process itself is short-lived and external to the Redis burst.
-- Agents vote with the same weight as the human.
-- External context calls happen before the vote is cast, not after.
-- The entire crystallisation step should itself be cheap and fast.
+- The vote lives outside the Redis burst (the "asking the gods" moment)
+- Agents are allowed to outvote you
+- The whole point is that most things should die
+- The few things that live become memes
 
 ---
 
-## Future Hardening Options
+## Spirit
 
-- Blind signatures for vote anonymity
-- Threshold signatures / secret sharing among agents
-- Homomorphic or MPC tallying (only the final result revealed)
-- Higher threshold (e.g. 4-of-6) for more conservative promotion
+Death Grips energy: intense, short, then gone.  
+Aphex Twin energy: experimental and slightly wrong.  
+MF DOOM energy: masked, clever, refuses to explain itself.
 
-These are optional. The authenticated majority protocol is the correct default for cost-efficient operation.
+If the final meme doesn’t make you smirk, the burst was a failure.
