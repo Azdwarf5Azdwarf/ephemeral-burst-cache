@@ -1,5 +1,7 @@
 # Deployment Guide
 
+> 🧭 **Lost? Start at the [README](README.md).** It's the map — go back to it whenever you're unsure what to do next.
+
 Ephemeral Burst Cache is designed to be disposable. The preferred deployment
 is short-lived and local — you run it on the machine you're walking around
 with. Long-running persistent deployments defeat the purpose.

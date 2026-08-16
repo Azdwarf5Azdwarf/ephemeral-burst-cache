@@ -1,5 +1,7 @@
 # The Photo
 
+> 🧭 **Lost? Start at the [README](README.md).** It's the map — go back to it whenever you're unsure what to do next.
+
 (the part where everyone stands still for a second)
 
 Nothing said during a burst is kept. There is no transcript, no summary, no
