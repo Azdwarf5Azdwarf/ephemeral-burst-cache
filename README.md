@@ -64,6 +64,13 @@ conversation rhymes as a group, not one voice at a time.
 
 See **[THE_PHOTO.md](THE_PHOTO.md)** for how the ending works.
 
+## Cultural root
+
+The structure above was already present before the name was known.
+A few hours after the project began, the Azerbaijani form **meykhana** became visible — competitive improvised rhyme that lives in tea houses, carries reason inside the flow, and leaves almost nothing behind.
+
+The full recognition is recorded in **[MEYKHANA.md](MEYKHANA.md)**.
+
 ## Quick start
 
 ```bash
