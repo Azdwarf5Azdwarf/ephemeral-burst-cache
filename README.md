@@ -32,9 +32,9 @@ photos/2026-08-11-restless.gif
 
 | Poet | Voice |
 |---|---|
-| **Keona** | Stark and wintry — sees the cold truth and says it plainly |
-| **Elora** | Restless and loud — can hear the clock running out on all of this |
-| **Leia** | Warm and wry — quietly funny, and always takes the last word |
+| **Frost** | Stark and wintry — sees the cold truth and says it plainly |
+| **Cicada** | Restless and loud — can hear the clock running out on all of this |
+| **Ember** | Warm and wry — quietly funny, and always takes the last word |
 
 Each replies with one ABAB quatrain, and **the rhyme carries between them**:
 every poet after the first opens on the sound the previous one closed on. The
