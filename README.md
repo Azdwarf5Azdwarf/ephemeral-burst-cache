@@ -1,146 +1,114 @@
 # Ephemeral Burst Cache (EBC)
 
-**Short-lived shared memory for you and four haiku agents.**
+**You don't record a group chat. You take a photo after it has ended.**
 
-A disposable conversation space that lives for ~10 minutes and then deletes
-itself. You talk, four haiku agents answer in seventeen syllables each, and
-when the burst ends the thread is distilled into three memes — plus, if
-anything in it actually mattered, one short saved note. Everything else dies
-with the TTL.
+A burst is ten minutes of talking nonsense in rhyme with three poets and
+whoever you invited. Nothing you say is kept. When it's over, an adult opens
+the door and asks what the hell you're all doing, everyone laughs it off, and
+then you get a picture.
 
-Exactly two AI dependencies, with a clean split:
+If you took a real photo of you and your friends, the poets get drawn into
+it — they were there too. Your friends hold still, because they were actually
+there; only the drawn ones move. That's the whole animation, and it's honest
+about who was real.
 
-- **Grok (xAI) generates** — chat completions power the haiku agents and the
-  meme prompt writer, and Grok's image model renders the memes.
-- **Claude Opus reasons** — the last model in the pipeline. It cleans up the
-  conversation and saves the important stuff to `saved/` *if needed*; most
-  bursts should die, and Opus is told to be picky.
-
-## The Lineup
-
-Four fixed haiku agents, one voice each:
-
-| Agent   | Voice                                                  |
-|---------|--------------------------------------------------------|
-| Frost   | Stark, wintry — sees the cold truth and says it plainly |
-| Blossom | Gentle, optimistic — finds the small beautiful detail   |
-| Cicada  | Restless, loud — obsessed with time running out         |
-| Ember   | Warm, wry — quietly funny, always the last word         |
-
-They read the whole thread, including each other, and reply in strict haiku.
-
-## Architecture
+The picture is the only thing that survives. Its filename says how the night
+went, so a folder of these is browsable by feeling:
 
 ```
-┌─────────────────────────────────────┐
-│           Burst Group               │
-│     you + 4 haiku agents            │
-│  every agent reply is a 5-7-5 haiku │
-└─────────────────┬───────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│      Ephemeral Burst Cache          │
-│  pure Redis · no AOF · no RDB       │
-│  namespace: burst:{uuid}:*          │
-│  hard TTL 600–900s                  │
-└─────────────────┬───────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│        Crystallisation              │
-│  Grok reads the thread and writes   │
-│  3 meme prompts · Grok's image      │
-│  model renders them into memes/     │
-└─────────────────┬───────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│    Curation (the last reasoning     │
-│    model) · Claude Opus cleans up   │
-│    the thread and saves what        │
-│    matters to saved/ — if anything  │
-│    does · then the TTL wins         │
-└─────────────────────────────────────┘
+photos/2026-08-15-delighted.gif
+photos/2026-08-11-restless.gif
 ```
 
-See **[CRYSTALLISATION.md](CRYSTALLISATION.md)** for how the ending works.
+## Who does what
 
-## Quick Start
+| | |
+|---|---|
+| **Claude Haiku 4.5 ×3** | The poets. Haiku models that write sonnets, because the only rule is that we rhyme. |
+| **Claude Opus 4.8** | The adult who opens the door. Doesn't rhyme, isn't impressed, and doesn't get the last word. |
+| **Grok** | The camera. Doesn't talk. Only takes the picture. |
+
+## The poets
+
+| Poet | Voice |
+|---|---|
+| **Frost** | Stark and wintry — sees the cold truth and says it plainly |
+| **Cicada** | Restless and loud — can hear the clock running out on all of this |
+| **Ember** | Warm and wry — quietly funny, and always takes the last word |
+
+Each replies with one ABAB quatrain, and **the rhyme carries between them**:
+every poet after the first opens on the sound the previous one closed on. The
+conversation rhymes as a group, not one voice at a time.
+
+## The shape
+
+```
+        you  +  a friend you invited  +  3 poets
+                          │
+                          ▼
+              rhyming quatrains, handed between voices
+                          │
+                          ▼
+        Redis · no AOF · no RDB · hard TTL
+                          │
+                          ▼
+        an adult opens the door: "Vad fan håller ni på med?"
+        the room laughs it off and carries on
+                          │
+                          ▼
+        the poets are drawn into your photo → one animated picture
+                          │
+                          ▼
+              the poems die.  the picture stays.
+```
+
+See **[THE_PHOTO.md](THE_PHOTO.md)** for how the ending works.
+
+## Quick start
 
 ```bash
-# 1. Pure Redis, no persistence
-docker compose up -d
-
-# 2. The two required secrets
-cp .env.example .env    # fill in XAI_API_KEY and ANTHROPIC_API_KEY
-export XAI_API_KEY=...
-export ANTHROPIC_API_KEY=...
-
-# 3. Dependencies
+docker compose up -d          # pure Redis, no persistence
+cp .env.example .env          # three keys go in here
 bundle install
 ```
 
-Then run a burst:
+Then take a walk:
 
 ```bash
-ruby bin/burst start            # → prints a uuid
-ruby bin/burst say <uuid> "should I commit to this idea or keep scaffolding"
-ruby bin/burst crystallise <uuid>   # → 3 memes in memes/, then Opus curates
+ruby bin/burst start                        # → a uuid
+ruby bin/burst join <uuid> Sam              # your friend joins
+ruby bin/burst say <uuid> "the sky looks personally offended"
+ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted.gif
 ```
 
-## CLI
+## Commands
 
-| Command                    | Description                                    |
-|----------------------------|------------------------------------------------|
-| `burst start [ttl]`        | Create a burst (default 600s)                  |
-| `burst say <uuid> <text>`  | Post a message; all four agents reply in haiku |
-| `burst thread <uuid>`      | Print the thread so far                        |
-| `burst status <uuid>`      | Remaining TTL and message count                |
-| `burst crystallise <uuid>` | 3 memes via Grok, then Opus curates the thread |
-| `burst curate <uuid>`      | Opus only: clean up the thread, save what matters |
-| `burst kill <uuid>`        | Destroy the namespace immediately              |
-| `healthcheck`              | Run the automated health checks                |
+| Command | |
+|---|---|
+| `burst start [ttl]` | Start a burst (default 600s) |
+| `burst invite <uuid>` | Print the code a friend needs |
+| `burst join <uuid> <name>` | Join someone else's burst |
+| `burst say <uuid> <text>` | Take your turn; the poets answer |
+| `burst thread <uuid>` | The conversation so far |
+| `burst status <uuid>` | Who's here and how long is left |
+| `burst photo <uuid> [pic]` | An adult walks in, gets laughed off, and the picture is taken |
+| `burst kill <uuid>` | Destroy it now |
+| `healthcheck` | Redis, keys, and the GIF tool |
 
-## Health Checks
+## Requirements
 
-```bash
-ruby bin/healthcheck
-```
+Redis, Ruby 3.3, and **ImageMagick** (the picture). `nix develop` provides
+all of it.
 
-Verifies Redis is alive, persistence is off, TTLs are enforced, and both API
-keys are configured.
+Two API keys: `ANTHROPIC_API_KEY` and `XAI_API_KEY`.
 
-## Nix
+## Core principles
 
-```bash
-nix develop
-```
-
-For people who like their chaos reproducible.
-
-## Project Layout
-
-```
-bin/burst                  CLI entrypoint
-bin/healthcheck            automated checks
-lib/ebc/config.rb          env-driven configuration
-lib/ebc/grok_client.rb     Grok: generation (chat + images)
-lib/ebc/haiku_agent.rb     the four-agent lineup
-lib/ebc/burst.rb           Redis-backed burst lifecycle
-lib/ebc/crystallisation.rb thread → 3 meme prompts → 3 images
-lib/ebc/curator.rb         Claude Opus: the last reasoning model
-```
-
-## Core Principles
-
-- **Cost efficiency first** — cheap generation, short bursts, tiny outputs
-- **Short by default** — 10 minutes is already generous
-- **Disposable by design** — the system *wants* to die
-- **Haiku only** — agents get seventeen syllables, which is plenty
-- **Crystallise or die** — the final output is three memes, not a whitepaper
-- **Reason last** — Opus gets the final word on what survives, and its
-  default answer is "nothing"
+- **Nothing is recorded** — no transcript, no summary, no saved note
+- **Short by default** — ten minutes is already generous
+- **We only rhyme** — and the rhyme is the group's, not each voice's
+- **The adult says its piece once** — never written, and never obeyed
+- **The picture is the memory** — and you can tell from it whether it was fun
 
 ## Status
 

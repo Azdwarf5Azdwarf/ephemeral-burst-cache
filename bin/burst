@@ -6,13 +6,18 @@ require_relative "../lib/ebc"
 def usage
   abort <<~USAGE
     Usage:
-      burst start [ttl]         Start a burst (default #{EBC::Config::DEFAULT_TTL}s)
-      burst say <uuid> <text>   Post a message; the four haiku agents reply
-      burst thread <uuid>       Print the thread so far
-      burst status <uuid>       Show status and remaining TTL
-      burst crystallise <uuid>  #{EBC::Config::MEME_COUNT} memes via Grok, then Opus curates the thread
-      burst curate <uuid>       Opus only: clean up the thread, save what matters
-      burst kill <uuid>         Destroy the namespace immediately
+      burst start [ttl]           Start a burst (default #{EBC::Config::DEFAULT_TTL}s)
+      burst invite <uuid>         Print the code a friend needs to join
+      burst join <uuid> <name>    Join someone else's burst
+      burst say <uuid> <text>     Take your turn; the three poets answer
+      burst thread <uuid>         Print the conversation so far
+      burst status <uuid>         Who's here and how long is left
+      burst photo <uuid> [pic]    The judge speaks, then the poets are drawn
+                                  into the picture you took of you and your
+                                  friends. Omit it and the whole thing is drawn.
+      burst kill <uuid>           Destroy the namespace immediately
+
+    Nothing survives a burst except the photo.
   USAGE
 end
 
@@ -23,6 +28,20 @@ def live_burst(uuid)
   burst
 end
 
+def poets_reply(burst)
+  rhyme = nil
+  EBC::SonnetAgent.lineup.each do |poet|
+    stanza = poet.reply(burst.thread, rhyme_with: rhyme)
+    next puts "#{poet.name} had nothing to say.\n\n" if stanza.nil?
+
+    burst.post(poet.name, stanza)
+    rhyme = EBC::SonnetAgent.rhyme_word(stanza)
+    puts "#{poet.name}:"
+    puts stanza.gsub(/^/, "  ")
+    puts
+  end
+end
+
 case ARGV[0]
 when "start"
   ttl = (ARGV[1] || EBC::Config::DEFAULT_TTL).to_i
@@ -30,23 +49,29 @@ when "start"
   puts "Burst started"
   puts "  uuid: #{burst.uuid}"
   puts "  ttl:  #{ttl}s"
-  puts "  ns:   burst:#{burst.uuid}:*"
+  puts
+  puts "Invite someone:  ruby bin/burst join #{burst.uuid} <their name>"
+
+when "invite"
+  burst = live_burst(ARGV[1])
+  puts "Tell your friend to run:"
+  puts "  ruby bin/burst join #{burst.uuid} <their name>"
+  puts
+  puts "They have #{burst.ttl_remaining}s before it's gone."
+
+when "join"
+  burst = live_burst(ARGV[1])
+  name = ARGV[2] or usage
+  burst.add_participant(name)
+  puts "#{name} joined. Here now: #{burst.participants.join(", ")}"
 
 when "say"
-  uuid = ARGV[1]
+  burst = live_burst(ARGV[1])
   text = ARGV[2..].to_a.join(" ")
   usage if text.empty?
-  burst = live_burst(uuid)
-  burst.post("you", text)
-
-  client = EBC::GrokClient.new
-  EBC::HaikuAgent.lineup(client).each do |agent|
-    haiku = agent.reply(burst.thread)
-    burst.post(agent.name, haiku)
-    puts "#{agent.name}:"
-    puts haiku.gsub(/^/, "  ")
-    puts
-  end
+  burst.post(burst.participants.first || "you", text)
+  puts
+  poets_reply(burst)
 
 when "thread"
   burst = live_burst(ARGV[1])
@@ -60,31 +85,38 @@ when "status"
   burst = live_burst(ARGV[1])
   meta = burst.meta
   puts "Burst #{burst.uuid}"
-  puts "  status:    #{meta["status"]}"
   puts "  started:   #{meta["started_at"]}"
   puts "  remaining: #{burst.ttl_remaining}s"
-  puts "  messages:  #{burst.thread.size}"
+  puts "  here:      #{burst.participants.join(", ")}"
+  puts "  stanzas:   #{burst.thread.size}"
 
-when "crystallise", "crystallize"
+when "photo"
   burst = live_burst(ARGV[1])
-  memes = EBC::Crystallisation.new(burst).run
-  puts "Crystallised #{memes.size} memes:"
-  memes.each do |meme|
-    puts "  #{meme[:path]}"
-    puts "    #{meme[:prompt]}"
+  verdict = EBC::Judge.new.run(burst)
+  abort "Nothing happened here — no photo taken." if verdict.nil?
+
+  # Said once, and never written down.
+  puts
+  puts verdict.words
+  puts
+
+  # And the room laughs it off. Not posted to the thread on purpose: the judge
+  # has already read everything, this is the last thing that happens, and it
+  # goes the way the rest of it goes — seen once, then gone.
+  rhyme = EBC::SonnetAgent.rhyme_word(verdict.words)
+  EBC::SonnetAgent.lineup.each do |poet|
+    line = poet.laugh_off(burst.thread, said: verdict.words, rhyme_with: rhyme)
+    next if line.nil?
+
+    rhyme = EBC::SonnetAgent.rhyme_word(line)
+    puts "  #{poet.name}: #{line.lines.map(&:strip).reject(&:empty?).join(" ")}"
   end
   puts
-  if EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
-    puts "ANTHROPIC_API_KEY not set — skipping Opus curation"
-  else
-    path = EBC::Curator.new.run(burst)
-    puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
-  end
 
-when "curate"
-  burst = live_burst(ARGV[1])
-  path = EBC::Curator.new.run(burst)
-  puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
+  yours = ARGV[2]
+  path = EBC::GroupPhoto.new(burst).run(verdict, photo: yours)
+  puts yours ? "The poets joined you in: #{path}" : "The picture: #{path}"
+  puts "Everything else dies with the burst."
 
 when "kill"
   usage if ARGV[1].nil?

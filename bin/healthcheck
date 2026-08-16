@@ -56,12 +56,16 @@ results << check("TTL enforcement") do
   ttl.positive? && ttl <= 2
 end
 
-results << check("Grok API key configured") do
+results << check("Anthropic API key (poets)") do
+  !EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
+end
+
+results << check("Grok API key (camera)") do
   !EBC::Config::XAI_API_KEY.to_s.empty?
 end
 
-results << check("Anthropic API key configured") do
-  !EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
+results << check("GIF tool (ImageMagick)") do
+  EBC::GroupPhoto::GIF_TOOLS.any? { |t| system("command -v #{t} > /dev/null 2>&1") }
 end
 
 puts

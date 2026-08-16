@@ -6,9 +6,8 @@ require "json"
 require "base64"
 
 module EBC
-  # Thin client for the xAI (Grok) API — the project's only AI dependency.
-  # Two endpoints: chat completions for the haiku agents and the meme
-  # prompt writer, image generation for rendering the memes themselves.
+  # Thin client for the xAI (Grok) API. Grok is the camera here and nothing
+  # else — it does not talk, it only takes the picture.
   class GrokClient
     class Error < StandardError; end
 
@@ -17,18 +16,6 @@ module EBC
 
       @api_key = api_key
       @base_url = base_url
-    end
-
-    def chat(messages, model: Config::GROK_CHAT_MODEL, temperature: 1.0)
-      body = post("/chat/completions", {
-        model: model,
-        messages: messages,
-        temperature: temperature
-      })
-      content = body.dig("choices", 0, "message", "content")
-      raise Error, "empty chat response" if content.nil? || content.strip.empty?
-
-      content.strip
     end
 
     # Returns raw image bytes, whichever way the API hands them back.

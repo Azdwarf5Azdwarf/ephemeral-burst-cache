@@ -5,20 +5,18 @@ module EBC
     REDIS_URL   = ENV.fetch("REDIS_URL", "redis://127.0.0.1:6379/0")
     DEFAULT_TTL = 600 # 10 minutes
 
-    # The Grok API is the only AI dependency: chat completions for the
-    # haiku agents, image generation for the memes.
+    # Grok is the camera and nothing else. It does not speak.
     XAI_API_KEY      = ENV["XAI_API_KEY"]
     XAI_BASE_URL     = ENV.fetch("XAI_BASE_URL", "https://api.x.ai/v1")
-    GROK_CHAT_MODEL  = ENV.fetch("GROK_CHAT_MODEL", "grok-4-fast-non-reasoning")
     GROK_IMAGE_MODEL = ENV.fetch("GROK_IMAGE_MODEL", "grok-2-image")
 
-    MEME_COUNT = 3
-    MEME_DIR   = ENV.fetch("EBC_MEME_DIR", "memes")
-
-    # Claude Opus is the single reasoning model: the last step of the
-    # pipeline, cleaning up the thread and saving what matters (if anything).
+    # Claude does the talking: three Haiku 4.5 poets, then one Opus judge.
     ANTHROPIC_API_KEY = ENV["ANTHROPIC_API_KEY"]
-    OPUS_MODEL        = ENV.fetch("OPUS_MODEL", "claude-opus-5")
-    SAVE_DIR          = ENV.fetch("EBC_SAVE_DIR", "saved")
+    HAIKU_MODEL       = ENV.fetch("HAIKU_MODEL", "claude-haiku-4-5")
+    OPUS_MODEL        = ENV.fetch("OPUS_MODEL", "claude-opus-4-8")
+
+    # The photo is the only thing that outlives a burst.
+    FRAME_COUNT = Integer(ENV.fetch("EBC_FRAME_COUNT", "4"))
+    PHOTO_DIR   = ENV.fetch("EBC_PHOTO_DIR", "photos")
   end
 end
