@@ -82,9 +82,9 @@ module EBC
     def poets_prompt(verdict, pose)
       <<~PROMPT.gsub(/\s+/, " ").strip
         Three cartoon characters standing together, full body, facing forward:
-        Frost, who is pale and stark and wintry;
-        Cicada, who is wiry and restless and looks like they are talking too fast;
-        Ember, who is warm and rumpled and quietly amused.
+        Keona, who is pale and stark and wintry;
+        Elora, who is wiry and restless and looks like they are talking too fast;
+        Leia, who is warm and rumpled and quietly amused.
         Clean illustrated style with bold outlines, like a sticker or a decal.
         They look #{verdict.mood}.
         Right now: #{pose}.
@@ -101,7 +101,7 @@ module EBC
 
       <<~PROMPT.gsub(/\s+/, " ").strip
         A warm illustrated group photo of #{who}, together with three characters
-        named Frost, Cicada and Ember. #{verdict.scene}
+        named Keona, Elora and Leia. #{verdict.scene}
         The mood is #{verdict.mood}.
         Right now: #{pose}.
         Painterly and charming, everyone in one shot, facing the camera.

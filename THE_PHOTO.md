@@ -70,7 +70,7 @@ the same mood gets a short suffix instead.
 
 - You
 - Anyone you invited (`burst join <uuid> <name>`)
-- **Frost**, **Cicada**, and **Ember**
+- **Keona**, **Elora**, and **Leia**
 
 Everyone who joined is named in the picture's prompt. A group photo needs a
 group.

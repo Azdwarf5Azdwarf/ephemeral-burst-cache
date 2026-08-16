@@ -9,9 +9,9 @@ module EBC
   # the previous one closed on.
   class SonnetAgent
     LINEUP = [
-      { name: "Frost",  voice: "stark and wintry; sees the cold truth of things and says it plainly" },
-      { name: "Cicada", voice: "restless and loud; can hear the clock running out on all of this" },
-      { name: "Ember",  voice: "warm and wry; quietly funny, and always takes the last word" }
+      { name: "Keona",  voice: "stark and wintry; sees the cold truth of things and says it plainly" },
+      { name: "Elora", voice: "restless and loud; can hear the clock running out on all of this" },
+      { name: "Leia",  voice: "warm and wry; quietly funny, and always takes the last word" }
     ].freeze
 
     def self.lineup(client = Anthropic::Client.new)
