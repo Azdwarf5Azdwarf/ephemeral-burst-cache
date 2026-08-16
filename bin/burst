@@ -1,87 +1,96 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "securerandom"
-require "redis"
-require "json"
+require_relative "../lib/ebc"
 
-REDIS_URL = ENV.fetch("REDIS_URL", "redis://127.0.0.1:6379/0")
-DEFAULT_TTL = 600 # 10 minutes
-
-def redis
-  @redis ||= Redis.new(url: REDIS_URL)
-end
-
-def namespace(uuid)
-  "burst:#{uuid}"
-end
-
-def start(ttl = DEFAULT_TTL)
-  uuid = SecureRandom.uuid
-  key = "#{namespace(uuid)}:meta"
-
-  meta = {
-    uuid: uuid,
-    started_at: Time.now.utc.iso8601,
-    ttl: ttl,
-    status: "live"
-  }
-
-  redis.set(key, meta.to_json, ex: ttl)
-  redis.set("#{namespace(uuid)}:status", "live", ex: ttl)
-
-  puts "Burst started"
-  puts "  uuid:  #{uuid}"
-  puts "  ttl:   #{ttl}s"
-  puts "  ns:    #{namespace(uuid)}:*"
-  uuid
-end
-
-def status(uuid)
-  key = "#{namespace(uuid)}:meta"
-  data = redis.get(key)
-
-  if data.nil?
-    puts "Burst #{uuid} is dead or never existed"
-    return
-  end
-
-  meta = JSON.parse(data)
-  ttl = redis.ttl(key)
-  puts "Burst #{uuid}"
-  puts "  status: #{meta["status"]}"
-  puts "  started: #{meta["started_at"]}"
-  puts "  remaining: #{ttl}s"
-end
-
-def kill(uuid)
-  keys = redis.keys("#{namespace(uuid)}:*")
-  if keys.empty?
-    puts "Nothing to kill"
-    return
-  end
-
-  redis.del(*keys)
-  puts "Burst #{uuid} destroyed (#{keys.size} keys)"
-end
-
-cmd = ARGV[0]
-
-case cmd
-when "start"
-  ttl = (ARGV[1] || DEFAULT_TTL).to_i
-  start(ttl)
-when "status"
-  uuid = ARGV[1] or abort("usage: burst status <uuid>")
-  status(uuid)
-when "kill"
-  uuid = ARGV[1] or abort("usage: burst kill <uuid>")
-  kill(uuid)
-else
-  puts <<~USAGE
+def usage
+  abort <<~USAGE
     Usage:
-      burst start [ttl]
-      burst status <uuid>
-      burst kill <uuid>
+      burst start [ttl]         Start a burst (default #{EBC::Config::DEFAULT_TTL}s)
+      burst say <uuid> <text>   Post a message; the four haiku agents reply
+      burst thread <uuid>       Print the thread so far
+      burst status <uuid>       Show status and remaining TTL
+      burst crystallise <uuid>  #{EBC::Config::MEME_COUNT} memes via Grok, then Opus curates the thread
+      burst curate <uuid>       Opus only: clean up the thread, save what matters
+      burst kill <uuid>         Destroy the namespace immediately
   USAGE
+end
+
+def live_burst(uuid)
+  usage if uuid.nil?
+  burst = EBC::Burst.new(uuid)
+  abort "Burst #{uuid} is dead or never existed" unless burst.alive?
+  burst
+end
+
+case ARGV[0]
+when "start"
+  ttl = (ARGV[1] || EBC::Config::DEFAULT_TTL).to_i
+  burst = EBC::Burst.start(ttl: ttl)
+  puts "Burst started"
+  puts "  uuid: #{burst.uuid}"
+  puts "  ttl:  #{ttl}s"
+  puts "  ns:   burst:#{burst.uuid}:*"
+
+when "say"
+  uuid = ARGV[1]
+  text = ARGV[2..].to_a.join(" ")
+  usage if text.empty?
+  burst = live_burst(uuid)
+  burst.post("you", text)
+
+  client = EBC::GrokClient.new
+  EBC::HaikuAgent.lineup(client).each do |agent|
+    haiku = agent.reply(burst.thread)
+    burst.post(agent.name, haiku)
+    puts "#{agent.name}:"
+    puts haiku.gsub(/^/, "  ")
+    puts
+  end
+
+when "thread"
+  burst = live_burst(ARGV[1])
+  burst.thread.each do |entry|
+    puts "#{entry["author"]}:"
+    puts entry["text"].gsub(/^/, "  ")
+    puts
+  end
+
+when "status"
+  burst = live_burst(ARGV[1])
+  meta = burst.meta
+  puts "Burst #{burst.uuid}"
+  puts "  status:    #{meta["status"]}"
+  puts "  started:   #{meta["started_at"]}"
+  puts "  remaining: #{burst.ttl_remaining}s"
+  puts "  messages:  #{burst.thread.size}"
+
+when "crystallise", "crystallize"
+  burst = live_burst(ARGV[1])
+  memes = EBC::Crystallisation.new(burst).run
+  puts "Crystallised #{memes.size} memes:"
+  memes.each do |meme|
+    puts "  #{meme[:path]}"
+    puts "    #{meme[:prompt]}"
+  end
+  puts
+  if EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
+    puts "ANTHROPIC_API_KEY not set — skipping Opus curation"
+  else
+    path = EBC::Curator.new.run(burst)
+    puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
+  end
+
+when "curate"
+  burst = live_burst(ARGV[1])
+  path = EBC::Curator.new.run(burst)
+  puts path ? "Opus saved the important stuff: #{path}" : "Opus verdict: nothing worth saving"
+
+when "kill"
+  usage if ARGV[1].nil?
+  count = EBC::Burst.new(ARGV[1]).kill
+  puts count.zero? ? "Nothing to kill" : "Burst #{ARGV[1]} destroyed (#{count} keys)"
+
+else
+  usage
 end

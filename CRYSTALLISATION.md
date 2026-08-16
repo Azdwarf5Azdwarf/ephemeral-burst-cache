@@ -1,91 +1,58 @@
-# Crystallisation & Save Vote Protocol
+# Crystallisation
 
-(also known as "the part where we decide if this was actually funny")
+(also known as "the part where we decide what the burst was actually about")
 
-After a burst ends, nothing is saved by default.  
-We run a quick vote. The winner gets turned into a short meme.  
-Everything else gets deleted like it never happened.
-
-Final output style: **burst xD**
+After a burst ends, nothing is saved by default. Instead of a summary, a
+document, or a thoughtful reflection, the thread is compressed into
+**three memes**. Then one last reasoning model — **Claude Opus** — reads the
+thread, cleans it up, and decides whether anything actually deserves to be
+saved. Usually the answer is no.
 
 ---
 
-## Goals
+## How it works
 
-- Disposal is the default (as it should be)
-- Promotion requires a vote
-- You can (and probably will) lose
-- Agents get a real vote too
-- The only thing that survives is a short meme
-- Keep it cheap and stupid
+1. The burst ends (TTL fires, or you run `burst crystallise <uuid>` before it does).
+2. The thread — your messages plus the four haiku agents' replies — is pulled from Redis.
+3. Grok reads the thread and writes **3 meme image prompts**, each capturing a
+   moment, running joke, or mood from the conversation.
+4. Grok's image model renders each prompt.
+5. The images land in `memes/` as `{uuid}-meme-{n}.png`.
+6. **The last reasoning model runs:** Claude Opus reads the same thread,
+   cleans it up, and judges whether anything is genuinely worth keeping —
+   a real idea, a decision, a task, a line too good to lose.
+7. If yes, a short distilled note lands in `saved/{uuid}.md`. If not,
+   Opus says `NOTHING_WORTH_SAVING` and nothing is written.
+8. The Redis namespace dies with its TTL. No transcript survives.
+
+Two models, a clean split: Grok generates (one chat call for the prompts,
+three image calls for the memes), Opus reasons (one call, the final word).
 
 ---
 
 ## Participants
 
 - You
-- 3–5 agents who spawn as **random musicians** every single burst
+- **Frost**, **Blossom**, **Cicada**, and **Ember** — the fixed haiku lineup
 
-No fixed personas.  
-One burst you’re dealing with a glitchy IDM producer, a masked abstract rapper, and a noise terrorist.  
-Next burst it’s three completely different weirdos.  
-Equal voting weight. Democracy is a mistake and we fully embrace it.
+No votes, no democracy, no losing. The thread itself decides what the memes
+are about, because the prompts are written from what was actually said.
 
 ---
 
-## Protocol (Authenticated Majority, meme edition)
+## Output contract
 
-1. Burst ends.
-2. Control plane pulls the short candidate outputs.
-3. Everyone (including the random musician agents) looks at external context if they feel like it.
-4. Everyone votes `save` or `discard` with one short reason.
-5. Majority wins.
-6. Whatever survives gets compressed into a short meme.
-7. The rest is murdered with the burst namespace.
-
-You can lose the vote.  
-This is a feature.
-
----
-
-## Final Output Format
-
-Not a document.  
-Not a summary.  
-Not a thoughtful reflection.
-
-Just a short meme energy dump, ideally ending with:
-
-```
-burst xD
-```
-
-If it’s longer than a tweet, we failed.
-
----
-
-## Security Properties
-
-We signed the votes so nobody can pretend they voted the other way.  
-That’s about as serious as this gets.
-
-Stronger crypto can wait until someone actually cares.
-
----
-
-## Design Notes
-
-- The vote lives outside the Redis burst (the "asking the gods" moment)
-- Agents are allowed to outvote you
-- Agents are freshly generated musicians every time — no continuity, no lore, pure lottery
-- The whole point is that most things should die
-- The few things that live become memes
+- Exactly 3 images per burst
+- Each prompt is visual and specific; any in-image text is caption-length
+- If a meme needs a paragraph to explain, the burst failed
+- At most one saved note per burst, and only when Opus judges it earned —
+  a title line plus a few bullets, never a transcript
 
 ---
 
 ## Spirit
 
-Every burst is a new lineup.  
-No fixed band. No loyalty. Just random musicians arguing for 10 minutes and then vanishing.
-
-If the final meme doesn’t make you smirk, the burst was a failure.
+Most things should die. The few things that live should make you smirk —
+or actually matter, in which case the last reasoning model writes them down.
+Seventeen syllables in, three images and maybe one note out, nothing in
+between is kept.

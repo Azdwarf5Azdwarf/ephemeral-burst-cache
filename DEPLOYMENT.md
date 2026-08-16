@@ -1,54 +1,51 @@
 # Deployment Guide
 
-Ephemeral Burst Cache is designed to be disposable.  
-The preferred deployment is short-lived and local or serverless. Long-running persistent deployments defeat the purpose.
+Ephemeral Burst Cache is designed to be disposable. The preferred deployment
+is short-lived and local. Long-running persistent deployments defeat the
+purpose.
 
-**Primary metric: cost efficiency only.**
+**Primary metric: cost efficiency.** One Redis container, one API vendor,
+three images per burst.
 
 ---
 
-## 1. Local Docker (Recommended)
+## 1. Prerequisites
 
-### Prerequisites
-- Docker + Docker Compose
+- Docker + Docker Compose (for Redis)
+- Ruby 3.3 (`bundle install` pulls the gem dependencies)
+- An xAI API key — Grok generates the haikus and the memes
+- An Anthropic API key — Claude Opus is the last reasoning model
+  (cleans up the thread, saves the important stuff if needed)
 
-### Start
+```bash
+cp .env.example .env
+export XAI_API_KEY=...
+export ANTHROPIC_API_KEY=...
+bundle install
+```
+
+---
+
+## 2. Local Docker (Recommended)
 
 ```bash
 docker compose up -d
 ```
 
 This launches a pure Redis instance with:
+
 - No RDB snapshots (`--save ""`)
 - No AOF (`--appendonly no`)
-- Automated healthcheck (`redis-cli ping`)
+- Container-level healthcheck (`redis-cli ping`)
 - Port `6379` exposed
 
-### Verify
+Verify:
 
 ```bash
-redis-cli ping
-# → PONG
-
-# Full automated healthcheck
 ruby bin/healthcheck
 ```
 
-### Create a burst
-
-```bash
-ruby bin/burst start 600
-```
-
-Example output:
-```
-Burst started
-  uuid:  3f8a9c2e-...
-  ttl:   600s
-  ns:    burst:3f8a9c2e-...:*
-```
-
-### Stop / Destroy
+Stop / destroy:
 
 ```bash
 docker compose down
@@ -57,97 +54,91 @@ docker compose down
 
 ---
 
-## 2. Nix Development Shell
+## 3. Nix Development Shell
 
 ```bash
 nix develop
 ```
 
-This provides:
-- `redis`
-- `ruby_3_3`
-- `docker-compose`
-
-You can then run Redis manually:
+Provides `redis`, `ruby_3_3`, and `docker-compose`. Run Redis manually if you
+prefer:
 
 ```bash
 redis-server --save "" --appendonly no
 ```
 
-Or use the same Docker Compose from inside the shell.
-
 ---
 
-## 3. Serverless / Remote Ephemeral (Upstash)
+## 4. Remote Redis (optional)
 
-For zero-local-infra testing:
-
-```bash
-curl -X POST https://upstash.com/start-redis
-```
-
-This returns a temporary Redis endpoint (no account required for short experiments).  
-Treat the returned credentials as a 10-minute burst window and discard them afterward.
-
-Set the environment variable and use the same Ruby tooling:
+Any throwaway managed Redis works — point `REDIS_URL` at it and keep
+persistence off:
 
 ```bash
 export REDIS_URL="rediss://..."
-ruby bin/burst start
-ruby bin/healthcheck
+ruby bin/healthcheck   # confirms persistence and AOF are disabled
 ```
+
+Treat the endpoint as disposable, like everything else here.
 
 ---
 
-## 4. Ruby Control Plane
-
-Install dependencies once:
+## 5. Running a Burst
 
 ```bash
-bundle install
+ruby bin/burst start 600
+ruby bin/burst say <uuid> "your message"
+ruby bin/burst thread <uuid>
+ruby bin/burst crystallise <uuid>
+ruby bin/burst curate <uuid>
+ruby bin/burst kill <uuid>
 ```
 
-Available commands:
-
-| Command                | Description                          |
-|------------------------|--------------------------------------|
-| `burst start [ttl]`    | Create a new burst (default 600s)    |
-| `burst status <uuid>`  | Show remaining TTL and metadata      |
-| `burst kill <uuid>`    | Immediately destroy the namespace    |
-| `healthcheck`          | Run full automated health checks     |
-
-All keys live under `burst:{uuid}:*` and inherit the TTL.
+All keys live under `burst:{uuid}:*` and share the burst's TTL. Two kinds of
+artifact can outlive a burst: crystallised memes in `memes/` (`EBC_MEME_DIR`),
+and — when Opus decides the thread earned it — a distilled note in `saved/`
+(`EBC_SAVE_DIR`).
 
 ---
 
-## Automated Health Checks
+## Configuration
 
-Two layers are provided:
+| Variable            | Default                     | Purpose                        |
+|---------------------|-----------------------------|--------------------------------|
+| `XAI_API_KEY`       | *(required)*                | Grok API auth (generation)     |
+| `ANTHROPIC_API_KEY` | *(required)*                | Claude Opus auth (reasoning)   |
+| `REDIS_URL`         | `redis://127.0.0.1:6379/0`  | Burst storage                  |
+| `XAI_BASE_URL`      | `https://api.x.ai/v1`       | Grok API endpoint              |
+| `GROK_CHAT_MODEL`   | `grok-4-fast-non-reasoning` | Haiku agents + prompt writer   |
+| `GROK_IMAGE_MODEL`  | `grok-2-image`              | Meme rendering                 |
+| `OPUS_MODEL`        | `claude-opus-5`             | The last reasoning model       |
+| `EBC_MEME_DIR`      | `memes`                     | Where crystallised memes land  |
+| `EBC_SAVE_DIR`      | `saved`                     | Where Opus's saved notes land  |
+
+Grok model names follow xAI's catalogue — check their docs if a default has
+been retired and override via env. `claude-opus-5` is a stable alias on the
+Anthropic API.
+
+---
+
+## Health Checks
+
+Two layers:
 
 1. **Docker healthcheck** — runs continuously inside the container (`redis-cli ping`).
-2. **Ruby healthcheck** (`bin/healthcheck`) — verifies:
-   - Redis connectivity
-   - Persistence is disabled
-   - AOF is off
-   - Namespace isolation works
-   - TTL enforcement works
+2. **Ruby healthcheck** (`bin/healthcheck`) — verifies connectivity,
+   persistence off, AOF off, namespace isolation, TTL enforcement, and that
+   both API keys are configured.
 
 Exit code `0` = healthy, `1` = failed. Suitable for CI or pre-burst validation.
 
 ---
 
-## Design Constraints for Deployment
+## Design Constraints
 
-- **Cost efficiency is the primary metric.**
 - **Never enable persistence** (no AOF, no RDB).
-- Prefer `--rm` / one-shot containers.
 - Prefer short TTLs (300–900 seconds).
 - Treat every deployment as temporary.
 - If you need multi-node or long-lived state, this is the wrong tool.
-
----
-
-## Production Note
-
-This project intentionally optimizes for *disappearance* and low cost.  
-If you find yourself adding volumes, backups, or heavy monitoring dashboards, you are building a different system.
+- If you find yourself adding volumes, backups, or dashboards, you are
+  building a different system.

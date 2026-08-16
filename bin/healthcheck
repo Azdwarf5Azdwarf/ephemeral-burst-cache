@@ -1,30 +1,26 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "redis"
-require "json"
-
-REDIS_URL = ENV.fetch("REDIS_URL", "redis://127.0.0.1:6379/0")
+require_relative "../lib/ebc"
 
 def redis
-  @redis ||= Redis.new(url: REDIS_URL)
+  @redis ||= Redis.new(url: EBC::Config::REDIS_URL)
+end
+
+# redis-rb returns CONFIG GET as ["key", "value"] in 4.x and {"key" => "value"} in 5+.
+def config_value(key)
+  cfg = redis.config("get", key)
+  cfg.is_a?(Hash) ? cfg[key] : cfg[1]
 end
 
 def check(name)
   print "#{name.ljust(32)} "
-  begin
-    result = yield
-    if result
-      puts "OK"
-      true
-    else
-      puts "FAIL"
-      false
-    end
-  rescue => e
-    puts "FAIL (#{e.class}: #{e.message})"
-    false
-  end
+  result = yield
+  puts result ? "OK" : "FAIL"
+  result
+rescue StandardError => e
+  puts "FAIL (#{e.class}: #{e.message})"
+  false
 end
 
 puts "EBC Health Check"
@@ -37,14 +33,11 @@ results << check("Redis connectivity") do
 end
 
 results << check("Persistence disabled (save)") do
-  # CONFIG GET save should return empty or ""
-  cfg = redis.config("get", "save")
-  cfg[1].to_s.strip.empty? || cfg[1] == ""
+  config_value("save").to_s.strip.empty?
 end
 
 results << check("AOF disabled") do
-  cfg = redis.config("get", "appendonly")
-  cfg[1].to_s.downcase == "no"
+  config_value("appendonly").to_s.downcase == "no"
 end
 
 results << check("Namespace isolation") do
@@ -60,7 +53,15 @@ results << check("TTL enforcement") do
   redis.set(test_key, "1", ex: 2)
   ttl = redis.ttl(test_key)
   redis.del(test_key)
-  ttl > 0 && ttl <= 2
+  ttl.positive? && ttl <= 2
+end
+
+results << check("Grok API key configured") do
+  !EBC::Config::XAI_API_KEY.to_s.empty?
+end
+
+results << check("Anthropic API key configured") do
+  !EBC::Config::ANTHROPIC_API_KEY.to_s.empty?
 end
 
 puts
