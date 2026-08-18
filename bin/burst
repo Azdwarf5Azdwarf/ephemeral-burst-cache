@@ -15,6 +15,7 @@ def usage
       burst photo <uuid> [pic]    The judge speaks, then the poets are drawn
                                   into the picture you took of you and your
                                   friends. Omit it and the whole thing is drawn.
+      burst kak <uuid>            Watch it live in kakoune; <a-s> to speak
       burst kill <uuid>           Destroy the namespace immediately
 
     Nothing survives a burst except the photo.
@@ -117,6 +118,15 @@ when "photo"
   path = EBC::GroupPhoto.new(burst).run(verdict, photo: yours)
   puts yours ? "The poets joined you in: #{path}" : "The picture: #{path}"
   puts "Everything else dies with the burst."
+
+when "kak"
+  burst = live_burst(ARGV[1])
+  EBC::KakSession.new(burst).run
+
+when "kak-poller"
+  uuid = ARGV[1] or abort "kak-poller needs a uuid"
+  interval = (ARGV[2] || 1).to_f
+  EBC::KakPoller.new(EBC::Burst.new(uuid), interval: interval).run
 
 when "kill"
   usage if ARGV[1].nil?

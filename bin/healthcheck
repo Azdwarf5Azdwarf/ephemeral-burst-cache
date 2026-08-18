@@ -68,6 +68,10 @@ results << check("GIF tool (ImageMagick)") do
   EBC::GroupPhoto::GIF_TOOLS.any? { |t| system("command -v #{t} > /dev/null 2>&1") }
 end
 
+results << check("kak (live view)") do
+  system("command -v kak > /dev/null 2>&1")
+end
+
 puts
 if results.all?
   puts "All checks passed"

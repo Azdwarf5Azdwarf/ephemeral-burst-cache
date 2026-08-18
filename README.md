@@ -62,7 +62,8 @@ conversation rhymes as a group, not one voice at a time.
               the poems die.  the picture stays.
 ```
 
-See **[THE_PHOTO.md](THE_PHOTO.md)** for how the ending works.
+See **[THE_PHOTO.md](THE_PHOTO.md)** for how the ending works, and
+**[THE_ROOM.md](THE_ROOM.md)** for watching it happen live.
 
 ## Quick start
 
@@ -81,6 +82,18 @@ ruby bin/burst say <uuid> "the sky looks personally offended"
 ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted.gif
 ```
 
+Or watch it happen live instead of dipping in and out:
+
+```bash
+ruby bin/burst kak <uuid>                   # opens kakoune, live-tailing the thread
+```
+
+Inside that session: `<a-s>` opens a prompt at the bottom — type a line, hit
+enter, and it's a real `burst say` (goes through Redis, the poets answer,
+everything streams back into the same view). `:q` to leave; nothing is saved.
+Needs `kak` on `PATH` — `nix develop` provides it, or `brew install kakoune` /
+your distro's package.
+
 ## Commands
 
 | Command | |
@@ -92,13 +105,14 @@ ruby bin/burst photo <uuid> us.jpg          # → photos/…-delighted.gif
 | `burst thread <uuid>` | The conversation so far |
 | `burst status <uuid>` | Who's here and how long is left |
 | `burst photo <uuid> [pic]` | An adult walks in, gets laughed off, and the picture is taken |
+| `burst kak <uuid>` | Watch it live in kakoune; type + `<a-s>` to speak |
 | `burst kill <uuid>` | Destroy it now |
 | `healthcheck` | Redis, keys, and the GIF tool |
 
 ## Requirements
 
-Redis, Ruby 3.3, and **ImageMagick** (the picture). `nix develop` provides
-all of it.
+Redis, Ruby 3.3, **ImageMagick** (the picture), and **kakoune** (the live
+view). `nix develop` provides all of it.
 
 Two API keys: `ANTHROPIC_API_KEY` and `XAI_API_KEY`.
 
