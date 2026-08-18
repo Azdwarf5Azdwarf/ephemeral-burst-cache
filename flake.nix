@@ -16,6 +16,7 @@
           ruby_3_3
           docker-compose
           imagemagick   # draws the poets into your photo, assembles the GIF
+          kakoune       # live-tailed view of a burst (bin/burst kak)
         ];
 
         shellHook = ''
