@@ -35,6 +35,23 @@ Quit kakoune (`:q`) and it's gone — no transcript, no scrollback saved
 anywhere. The room was never being recorded; you were just watching it
 happen in real time, which is a different thing from keeping it.
 
+## Debugging
+
+Buffer looks frozen, or `<a-s>` doesn't seem to do anything? The poller and
+`say` each log to a file inside a tmpdir that's removed when kakoune exits —
+so check it *while the session is still running*, in another terminal:
+
+```
+pgrep -fl kak-poller          # find the poller's pid
+lsof -p <pid> | grep -E 'poller\.log|\.fifo'   # find its log + fifo paths
+tail -f <path-to-poller.log>  # Redis/JSON errors show up here
+```
+
+`say.log` sits next to `poller.log` in the same tmpdir — same trick to find
+it. Known rough edge: the on-screen "`<a-s>` to speak, `:q` to leave" hint
+sometimes doesn't render (a kakoune `WinCreate` timing quirk) — the bindings
+still work even when the hint doesn't show.
+
 ---
 
 ## Spirit
